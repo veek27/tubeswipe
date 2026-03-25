@@ -111,29 +111,52 @@ Réponds avec ce JSON exact :
   }
 }`
 
-    // Retry logic for overloaded API
+    // Try models in order with retry logic
+    const models = ['claude-sonnet-4-20250514', 'claude-3-5-sonnet-20241022']
     let response
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        response = await anthropic.messages.create({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 2000,
-          system: systemPrompt,
-          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-          messages: [{ role: 'user', content: userMessage }],
-        })
-        break
-      } catch (err: unknown) {
-        const apiErr = err as { status?: number; message?: string }
-        if (apiErr.status === 529 && attempt < 2) {
-          await new Promise(r => setTimeout(r, 2000 * (attempt + 1)))
-          continue
+    let lastError: unknown = null
+
+    for (const model of models) {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          if (model === 'claude-sonnet-4-20250514') {
+            response = await anthropic.messages.create({
+              model,
+              max_tokens: 2000,
+              system: systemPrompt,
+              tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+              messages: [{ role: 'user', content: userMessage }],
+            })
+          } else {
+            response = await anthropic.messages.create({
+              model,
+              max_tokens: 2000,
+              system: systemPrompt,
+              messages: [{ role: 'user', content: userMessage }],
+            })
+          }
+          break
+        } catch (err: unknown) {
+          lastError = err
+          const apiErr = err as { status?: number }
+          if (apiErr.status === 529 && attempt < 2) {
+            await new Promise(r => setTimeout(r, 3000 * (attempt + 1)))
+            continue
+          }
+          // If overloaded on last attempt, try next model
+          if (apiErr.status === 529) break
+          throw err
         }
-        throw err
       }
+      if (response) break
     }
+
     if (!response) {
-      throw new Error('L\'API Claude est temporairement surchargée. Réessaie dans quelques secondes.')
+      console.error('All models failed:', lastError)
+      return NextResponse.json(
+        { error: 'L\'IA est temporairement surchargée. Réessaie dans 30 secondes.' },
+        { status: 503 }
+      )
     }
 
     // Extract text from response

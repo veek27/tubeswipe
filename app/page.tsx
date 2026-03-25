@@ -46,7 +46,13 @@ export default function Home() {
       setStoreLoading(false)
       router.push('/analyze')
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : 'Erreur inconnue'
+      let message = e instanceof Error ? e.message : 'Erreur inconnue'
+      // Clean up raw JSON errors
+      if (message.includes('overloaded') || message.includes('529') || message.includes('Overloaded')) {
+        message = 'L\'IA est temporairement surchargée. Réessaie dans 30 secondes.'
+      } else if (message.includes('"type":"error"')) {
+        message = 'Erreur temporaire du serveur. Réessaie dans quelques secondes.'
+      }
       setError(message)
       setLoading(false)
       setStoreLoading(false)
