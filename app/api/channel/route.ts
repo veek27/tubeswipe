@@ -40,38 +40,49 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'URL de chaîne YouTube invalide' }, { status: 400 })
     }
 
-    let channelId = identifier.value
+    let channelData
 
-    // If we have a handle or custom name, we need to resolve it to a channel ID
     if (identifier.type === 'handle') {
-      const searchRes = await fetch(
-        `https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=${encodeURIComponent(identifier.value)}&maxResults=1&key=${apiKey}`
+      // Use forHandle parameter — exact match, no search needed
+      const res = await fetch(
+        `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,brandingSettings&forHandle=${encodeURIComponent(identifier.value)}&key=${apiKey}`
       )
-      const searchData = await searchRes.json()
-      if (!searchData.items?.length) {
-        return NextResponse.json({ error: 'Chaîne introuvable' }, { status: 404 })
-      }
-      channelId = searchData.items[0].snippet.channelId
+      channelData = await res.json()
     } else if (identifier.type === 'custom') {
-      const searchRes = await fetch(
-        `https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=${encodeURIComponent(identifier.value)}&maxResults=1&key=${apiKey}`
+      // Try forUsername first
+      const res = await fetch(
+        `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,brandingSettings&forUsername=${encodeURIComponent(identifier.value)}&key=${apiKey}`
       )
-      const searchData = await searchRes.json()
-      if (!searchData.items?.length) {
-        return NextResponse.json({ error: 'Chaîne introuvable' }, { status: 404 })
-      }
-      channelId = searchData.items[0].snippet.channelId
-    }
+      channelData = await res.json()
 
-    // Fetch channel details
-    const channelRes = await fetch(
-      `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,brandingSettings&id=${channelId}&key=${apiKey}`
-    )
-    const channelData = await channelRes.json()
+      // If not found, fallback to search
+      if (!channelData.items?.length) {
+        const searchRes = await fetch(
+          `https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=${encodeURIComponent(identifier.value)}&maxResults=1&key=${apiKey}`
+        )
+        const searchData = await searchRes.json()
+        if (!searchData.items?.length) {
+          return NextResponse.json({ error: 'Chaîne introuvable' }, { status: 404 })
+        }
+        const foundId = searchData.items[0].snippet.channelId
+        const channelRes = await fetch(
+          `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,brandingSettings&id=${foundId}&key=${apiKey}`
+        )
+        channelData = await channelRes.json()
+      }
+    } else {
+      // Direct channel ID
+      const res = await fetch(
+        `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,brandingSettings&id=${identifier.value}&key=${apiKey}`
+      )
+      channelData = await res.json()
+    }
 
     if (!channelData.items?.length) {
       return NextResponse.json({ error: 'Chaîne introuvable' }, { status: 404 })
     }
+
+    const channelId = channelData.items[0].id
 
     const channel = channelData.items[0]
     const snippet = channel.snippet
