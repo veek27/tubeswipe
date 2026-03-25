@@ -9,8 +9,30 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        bg: '#0a0a0a',
+        surface: '#111111',
+        'surface-2': '#181818',
+        border: '#222222',
+        accent: '#E40000',
+        'accent-hover': '#ff1a1a',
+        'text-primary': '#f0f0f0',
+        'text-muted': '#888888',
+        'text-dim': '#555555',
+        success: '#22c55e',
+        warning: '#f59e0b',
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['Archivo', 'Inter', 'sans-serif'],
+        mono: ['Menlo', 'Monaco', 'monospace'],
+      },
+      borderRadius: {
+        'xl': '12px',
+        '2xl': '16px',
+        '3xl': '20px',
+      },
+      maxWidth: {
+        'page': '1100px',
       },
     },
   },
