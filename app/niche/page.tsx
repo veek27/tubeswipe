@@ -1,10 +1,33 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '@/store/useStore'
+
+interface Profile {
+  id: string
+  name: string
+  niche: string
+  icp: string
+  angle: string
+  style: string
+  extra: string
+}
+
+const STORAGE_KEY = 'tubeswipe-profiles'
+
+function loadProfiles(): Profile[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch { return [] }
+}
+
+function saveProfiles(profiles: Profile[]) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles))
+}
 
 export default function NichePage() {
   const router = useRouter()
@@ -18,9 +41,61 @@ export default function NichePage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  const [profiles, setProfiles] = useState<Profile[]>([])
+  const [showSaveModal, setShowSaveModal] = useState(false)
+  const [profileName, setProfileName] = useState('')
+  const [activeProfileId, setActiveProfileId] = useState<string | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
+
   useEffect(() => {
     if (!analysis) router.replace('/')
   }, [analysis, router])
+
+  useEffect(() => {
+    setProfiles(loadProfiles())
+  }, [])
+
+  const selectProfile = useCallback((profile: Profile) => {
+    setNiche(profile.niche)
+    setIcp(profile.icp)
+    setAngle(profile.angle)
+    setStyle(profile.style)
+    setExtra(profile.extra)
+    setActiveProfileId(profile.id)
+  }, [])
+
+  const handleSaveProfile = () => {
+    if (!profileName.trim()) return
+    if (!niche.trim() && !icp.trim()) {
+      setError('Remplis au moins la niche ou l&apos;ICP avant de sauvegarder.')
+      return
+    }
+
+    const newProfile: Profile = {
+      id: Date.now().toString(),
+      name: profileName.trim(),
+      niche: niche.trim(),
+      icp: icp.trim(),
+      angle: angle.trim(),
+      style: style.trim(),
+      extra: extra.trim(),
+    }
+
+    const updated = [...profiles, newProfile]
+    setProfiles(updated)
+    saveProfiles(updated)
+    setActiveProfileId(newProfile.id)
+    setShowSaveModal(false)
+    setProfileName('')
+  }
+
+  const handleDeleteProfile = (id: string) => {
+    const updated = profiles.filter(p => p.id !== id)
+    setProfiles(updated)
+    saveProfiles(updated)
+    if (activeProfileId === id) setActiveProfileId(null)
+    setShowDeleteConfirm(null)
+  }
 
   if (!analysis) return null
 
@@ -88,6 +163,73 @@ export default function NichePage() {
             On va adapter le sujet &quot;<span className="text-text-primary font-medium">{analysis.sujet}</span>&quot; à ton positionnement
           </p>
         </motion.div>
+
+        {/* Saved Profiles */}
+        {profiles.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.05 }}
+            className="mb-6"
+          >
+            <p className="text-text-muted text-xs uppercase tracking-wider font-bold mb-3 flex items-center gap-2">
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+              Mes profils sauvegardés
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {profiles.map((profile) => (
+                <div key={profile.id} className="group relative">
+                  <button
+                    onClick={() => selectProfile(profile)}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                      activeProfileId === profile.id
+                        ? 'bg-accent text-white'
+                        : 'bg-surface border border-border text-text-muted hover:text-text-primary hover:border-accent/50'
+                    }`}
+                  >
+                    {profile.name}
+                  </button>
+                  {/* Delete button */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(profile.id) }}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-surface-2 border border-border text-text-dim hover:text-red-400 hover:border-red-400/50 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                  >
+                    ×
+                  </button>
+                  {/* Delete confirm */}
+                  <AnimatePresence>
+                    {showDeleteConfirm === profile.id && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="absolute top-full left-0 mt-2 z-20 bg-surface border border-border rounded-xl p-3 shadow-xl shadow-black/30 whitespace-nowrap"
+                      >
+                        <p className="text-xs text-text-muted mb-2">Supprimer ce profil ?</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleDeleteProfile(profile.id)}
+                            className="px-3 py-1 rounded-lg bg-red-500/20 text-red-400 text-xs font-medium hover:bg-red-500/30 transition-colors"
+                          >
+                            Supprimer
+                          </button>
+                          <button
+                            onClick={() => setShowDeleteConfirm(null)}
+                            className="px-3 py-1 rounded-lg bg-surface-2 text-text-muted text-xs font-medium hover:text-text-primary transition-colors"
+                          >
+                            Annuler
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* Form */}
         <motion.div
@@ -186,6 +328,18 @@ export default function NichePage() {
             >
               Retour
             </button>
+
+            {/* Save profile button */}
+            <button
+              onClick={() => setShowSaveModal(true)}
+              className="px-5 py-3 rounded-xl border border-accent/30 text-accent hover:bg-accent/10 text-sm font-medium transition-all flex items-center justify-center gap-2"
+            >
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+              Sauvegarder ce profil
+            </button>
+
             <button
               onClick={handleGenerate}
               disabled={loading}
@@ -224,6 +378,56 @@ export default function NichePage() {
           )}
         </motion.div>
       </div>
+
+      {/* Save Profile Modal */}
+      <AnimatePresence>
+        {showSaveModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center px-5 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowSaveModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-surface border border-border rounded-2xl p-6 w-full max-w-md shadow-2xl shadow-black/40"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="font-display text-lg font-bold text-text-primary mb-1">Sauvegarder ce profil</h3>
+              <p className="text-text-dim text-xs mb-5">Donne un nom à ce profil pour le retrouver facilement.</p>
+
+              <input
+                type="text"
+                value={profileName}
+                onChange={(e) => setProfileName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSaveProfile()}
+                placeholder="ex: Ma chaîne fitness, Mon podcast tech..."
+                className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-dim font-mono transition-all mb-4"
+                autoFocus
+              />
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowSaveModal(false)}
+                  className="px-4 py-2.5 rounded-xl border border-border text-text-muted hover:text-text-primary text-sm font-medium transition-all"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleSaveProfile}
+                  disabled={!profileName.trim()}
+                  className="flex-1 bg-accent hover:bg-accent-hover text-white font-semibold px-4 py-2.5 rounded-xl text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Sauvegarder
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
