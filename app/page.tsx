@@ -73,7 +73,7 @@ export default function Home() {
 
         {/* Headline */}
         <h1 className="font-display text-3xl sm:text-4xl md:text-[2.75rem] font-extrabold tracking-tight leading-[1.15] mb-3">
-          Arrête d'inventer des sujets.
+          Arrête d&apos;inventer des sujets.
           <br />
           <span className="text-accent">Copie ce qui marche déjà.</span>
         </h1>
