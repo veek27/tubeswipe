@@ -5,6 +5,20 @@ import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '@/store/useStore'
 
+interface ChannelInfo {
+  id: string
+  name: string
+  description: string
+  thumbnail: string
+  subscribers: string
+  subscriberCount: number
+  totalViews: string
+  videoCount: number
+  createdAt: string
+  country: string
+  recentVideos: { title: string; publishedAt: string }[]
+}
+
 interface Profile {
   id: string
   name: string
@@ -13,6 +27,8 @@ interface Profile {
   angle: string
   style: string
   extra: string
+  channelUrl?: string
+  channelInfo?: ChannelInfo | null
 }
 
 const STORAGE_KEY = 'tubeswipe-profiles'
@@ -41,6 +57,11 @@ export default function NichePage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  const [channelUrl, setChannelUrl] = useState('')
+  const [channelInfo, setChannelInfo] = useState<ChannelInfo | null>(null)
+  const [channelLoading, setChannelLoading] = useState(false)
+  const [channelError, setChannelError] = useState('')
+
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [profileName, setProfileName] = useState('')
@@ -61,15 +82,42 @@ export default function NichePage() {
     setAngle(profile.angle)
     setStyle(profile.style)
     setExtra(profile.extra)
+    setChannelUrl(profile.channelUrl || '')
+    setChannelInfo(profile.channelInfo || null)
     setActiveProfileId(profile.id)
   }, [])
 
+  const handleFetchChannel = async () => {
+    if (!channelUrl.trim()) return
+    setChannelError('')
+    setChannelLoading(true)
+    setChannelInfo(null)
+
+    try {
+      const res = await fetch('/api/channel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ channelUrl: channelUrl.trim() }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Impossible de récupérer la chaîne')
+      }
+
+      const data = await res.json()
+      setChannelInfo(data)
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Erreur inconnue'
+      setChannelError(message)
+    } finally {
+      setChannelLoading(false)
+    }
+  }
+
   const handleSaveProfile = () => {
     if (!profileName.trim()) return
-    if (!niche.trim() && !icp.trim()) {
-      setError('Remplis au moins la niche ou l&apos;ICP avant de sauvegarder.')
-      return
-    }
+    if (!niche.trim() && !icp.trim()) return
 
     const newProfile: Profile = {
       id: Date.now().toString(),
@@ -79,6 +127,8 @@ export default function NichePage() {
       angle: angle.trim(),
       style: style.trim(),
       extra: extra.trim(),
+      channelUrl: channelUrl.trim(),
+      channelInfo,
     }
 
     const updated = [...profiles, newProfile]
@@ -106,7 +156,14 @@ export default function NichePage() {
       return
     }
 
-    const nicheData = { niche: niche.trim(), icp: icp.trim(), angle: angle.trim(), style: style.trim(), extra: extra.trim() }
+    const nicheData = {
+      niche: niche.trim(),
+      icp: icp.trim(),
+      angle: angle.trim(),
+      style: style.trim(),
+      extra: extra.trim(),
+      channelInfo: channelInfo || undefined,
+    }
     setNicheData(nicheData)
     setLoading(true)
     setStoreLoading(true, 'Génération du script...')
@@ -191,14 +248,12 @@ export default function NichePage() {
                   >
                     {profile.name}
                   </button>
-                  {/* Delete button */}
                   <button
                     onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(profile.id) }}
                     className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-surface-2 border border-border text-text-dim hover:text-red-400 hover:border-red-400/50 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
                   >
                     ×
                   </button>
-                  {/* Delete confirm */}
                   <AnimatePresence>
                     {showDeleteConfirm === profile.id && (
                       <motion.div
@@ -314,69 +369,213 @@ export default function NichePage() {
               />
             </div>
           </div>
+        </motion.div>
 
-          {/* Error */}
-          {error && (
-            <p className="text-red-400 text-xs mt-4 font-mono">{error}</p>
-          )}
-
-          {/* Actions */}
-          <div className="flex flex-col sm:flex-row gap-3 mt-6">
-            <button
-              onClick={() => router.push('/analyze')}
-              className="px-5 py-3 rounded-xl border border-border text-text-muted hover:text-text-primary hover:bg-surface-2 text-sm font-medium transition-all"
-            >
-              Retour
-            </button>
-
-            {/* Save profile button */}
-            <button
-              onClick={() => setShowSaveModal(true)}
-              className="px-5 py-3 rounded-xl border border-accent/30 text-accent hover:bg-accent/10 text-sm font-medium transition-all flex items-center justify-center gap-2"
-            >
-              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+        {/* YouTube Channel Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className="mt-6 bg-surface border border-border rounded-2xl p-6 sm:p-8"
+        >
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-8 h-8 rounded-lg bg-red-500/15 flex items-center justify-center">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-red-500">
+                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814z" />
+                <path d="M9.545 15.568V8.432L15.818 12l-6.273 3.568z" fill="white" />
               </svg>
-              Sauvegarder ce profil
-            </button>
+            </div>
+            <div>
+              <h3 className="font-display text-lg font-bold text-text-primary">Ta chaîne YouTube</h3>
+              <p className="text-text-dim text-xs">Ajoute ta chaîne pour enrichir encore plus le script</p>
+            </div>
+          </div>
 
+          <div className="mt-5 flex flex-col sm:flex-row gap-2">
+            <input
+              type="text"
+              value={channelUrl}
+              onChange={(e) => { setChannelUrl(e.target.value); setChannelError('') }}
+              onKeyDown={(e) => e.key === 'Enter' && !channelLoading && handleFetchChannel()}
+              placeholder="youtube.com/@tachaîne ou lien de ta chaîne"
+              className="flex-1 bg-surface-2 border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-dim font-mono transition-all"
+              disabled={channelLoading}
+            />
             <button
-              onClick={handleGenerate}
-              disabled={loading}
-              className="flex-1 bg-accent hover:bg-accent-hover text-white font-semibold px-6 py-3 rounded-xl text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              onClick={handleFetchChannel}
+              disabled={channelLoading || !channelUrl.trim()}
+              className="px-5 py-3 rounded-xl bg-surface-2 border border-border text-text-muted hover:text-text-primary hover:border-accent/50 text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 whitespace-nowrap"
             >
-              {loading ? (
+              {channelLoading ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Génération en cours...
+                  <div className="w-3.5 h-3.5 border-2 border-text-dim/30 border-t-text-muted rounded-full animate-spin" />
+                  Chargement...
                 </>
               ) : (
                 <>
-                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                   </svg>
-                  Générer mon script
+                  Analyser ma chaîne
                 </>
               )}
             </button>
           </div>
 
-          {/* Loading message */}
-          {loading && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="mt-4 flex items-center gap-3 text-text-muted text-xs"
-            >
-              <div className="flex gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-accent" style={{ animation: 'pulse-dot 1.4s infinite 0s' }} />
-                <span className="w-1.5 h-1.5 rounded-full bg-accent" style={{ animation: 'pulse-dot 1.4s infinite 0.2s' }} />
-                <span className="w-1.5 h-1.5 rounded-full bg-accent" style={{ animation: 'pulse-dot 1.4s infinite 0.4s' }} />
-              </div>
-              Réécriture du script adapté à ta niche...
-            </motion.div>
+          {channelError && (
+            <p className="text-red-400 text-xs mt-3 font-mono">{channelError}</p>
           )}
+
+          {/* Channel Info Card */}
+          <AnimatePresence>
+            {channelInfo && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="mt-5"
+              >
+                <div className="bg-surface-2 border border-border rounded-xl p-5">
+                  {/* Channel header */}
+                  <div className="flex items-start gap-4 mb-5">
+                    {channelInfo.thumbnail && (
+                      <img
+                        src={channelInfo.thumbnail}
+                        alt={channelInfo.name}
+                        className="w-14 h-14 rounded-full border-2 border-border object-cover flex-shrink-0"
+                      />
+                    )}
+                    <div className="min-w-0">
+                      <h4 className="font-display font-bold text-text-primary text-base truncate">{channelInfo.name}</h4>
+                      {channelInfo.description && (
+                        <p className="text-text-dim text-xs mt-1 line-clamp-2">{channelInfo.description}</p>
+                      )}
+                    </div>
+                    {/* Remove channel button */}
+                    <button
+                      onClick={() => { setChannelInfo(null); setChannelUrl('') }}
+                      className="ml-auto flex-shrink-0 text-text-dim hover:text-red-400 transition-colors"
+                    >
+                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* Stats grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+                    <div className="bg-surface border border-border rounded-lg p-3 text-center">
+                      <p className="text-accent font-bold text-lg font-mono">{channelInfo.subscribers}</p>
+                      <p className="text-text-dim text-[10px] uppercase tracking-wider font-medium mt-0.5">Abonnés</p>
+                    </div>
+                    <div className="bg-surface border border-border rounded-lg p-3 text-center">
+                      <p className="text-text-primary font-bold text-lg font-mono">{channelInfo.totalViews}</p>
+                      <p className="text-text-dim text-[10px] uppercase tracking-wider font-medium mt-0.5">Vues totales</p>
+                    </div>
+                    <div className="bg-surface border border-border rounded-lg p-3 text-center">
+                      <p className="text-text-primary font-bold text-lg font-mono">{channelInfo.videoCount}</p>
+                      <p className="text-text-dim text-[10px] uppercase tracking-wider font-medium mt-0.5">Vidéos</p>
+                    </div>
+                    <div className="bg-surface border border-border rounded-lg p-3 text-center">
+                      <p className="text-text-primary font-bold text-lg font-mono">{channelInfo.country}</p>
+                      <p className="text-text-dim text-[10px] uppercase tracking-wider font-medium mt-0.5">Pays</p>
+                    </div>
+                  </div>
+
+                  {/* Recent videos */}
+                  {channelInfo.recentVideos.length > 0 && (
+                    <div>
+                      <p className="text-text-muted text-[10px] uppercase tracking-wider font-bold mb-2">Dernières vidéos</p>
+                      <div className="space-y-1.5">
+                        {channelInfo.recentVideos.map((video, i) => (
+                          <div key={i} className="flex items-center gap-2 text-xs">
+                            <span className="text-text-dim font-mono w-4 text-right flex-shrink-0">{i + 1}.</span>
+                            <span className="text-text-primary truncate">{video.title}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="mt-4 pt-4 border-t border-border">
+                    <p className="text-text-dim text-xs flex items-center gap-1.5">
+                      <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      Ces infos seront utilisées pour personnaliser ton script
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
+
+        {/* Error */}
+        {error && (
+          <p className="text-red-400 text-xs mt-4 font-mono">{error}</p>
+        )}
+
+        {/* Actions */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
+          className="flex flex-col sm:flex-row gap-3 mt-6"
+        >
+          <button
+            onClick={() => router.push('/analyze')}
+            className="px-5 py-3 rounded-xl border border-border text-text-muted hover:text-text-primary hover:bg-surface-2 text-sm font-medium transition-all"
+          >
+            Retour
+          </button>
+
+          <button
+            onClick={() => setShowSaveModal(true)}
+            className="px-5 py-3 rounded-xl border border-accent/30 text-accent hover:bg-accent/10 text-sm font-medium transition-all flex items-center justify-center gap-2"
+          >
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+            </svg>
+            Sauvegarder ce profil
+          </button>
+
+          <button
+            onClick={handleGenerate}
+            disabled={loading}
+            className="flex-1 bg-accent hover:bg-accent-hover text-white font-semibold px-6 py-3 rounded-xl text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Génération en cours...
+              </>
+            ) : (
+              <>
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+                Générer mon script
+              </>
+            )}
+          </button>
+        </motion.div>
+
+        {/* Loading message */}
+        {loading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mt-4 flex items-center gap-3 text-text-muted text-xs"
+          >
+            <div className="flex gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent" style={{ animation: 'pulse-dot 1.4s infinite 0s' }} />
+              <span className="w-1.5 h-1.5 rounded-full bg-accent" style={{ animation: 'pulse-dot 1.4s infinite 0.2s' }} />
+              <span className="w-1.5 h-1.5 rounded-full bg-accent" style={{ animation: 'pulse-dot 1.4s infinite 0.4s' }} />
+            </div>
+            Réécriture du script adapté à ta niche...
+          </motion.div>
+        )}
       </div>
 
       {/* Save Profile Modal */}
@@ -397,7 +596,15 @@ export default function NichePage() {
               onClick={(e) => e.stopPropagation()}
             >
               <h3 className="font-display text-lg font-bold text-text-primary mb-1">Sauvegarder ce profil</h3>
-              <p className="text-text-dim text-xs mb-5">Donne un nom à ce profil pour le retrouver facilement.</p>
+              <p className="text-text-dim text-xs mb-2">Donne un nom à ce profil pour le retrouver facilement.</p>
+              {channelInfo && (
+                <p className="text-accent text-xs mb-4 flex items-center gap-1.5">
+                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  La chaîne {channelInfo.name} sera aussi sauvegardée
+                </p>
+              )}
 
               <input
                 type="text"

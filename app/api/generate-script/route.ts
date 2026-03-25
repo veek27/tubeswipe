@@ -7,7 +7,7 @@ const anthropic = new Anthropic({
 
 export async function POST(request: NextRequest) {
   try {
-    const { analysis, niche, icp, angle, style, extra } = await request.json()
+    const { analysis, niche, icp, angle, style, extra, channelInfo } = await request.json()
 
     if (!analysis || !niche || !icp) {
       return NextResponse.json({ error: 'Données manquantes' }, { status: 400 })
@@ -32,7 +32,20 @@ MON ICP : ${icp}
 MON ANGLE / POSITIONNEMENT : ${angle || 'Non précisé'}
 MON STYLE : ${style || 'Naturel et direct'}
 INFOS SUPPLÉMENTAIRES : ${extra || 'Aucune'}
+${channelInfo ? `
+DONNÉES DE MA CHAÎNE YOUTUBE :
+- Nom : ${channelInfo.name}
+- Abonnés : ${channelInfo.subscribers}
+- Vues totales : ${channelInfo.totalViews}
+- Nombre de vidéos : ${channelInfo.videoCount}
+- Description : ${channelInfo.description || 'Non renseignée'}
+- Dernières vidéos : ${(channelInfo.recentVideos || []).map((v: { title: string }) => v.title).join(', ')}
 
+Utilise ces données pour :
+- Adapter le niveau de langage et la maturité du contenu au stade de la chaîne
+- S'inspirer du style et des sujets des dernières vidéos pour garder une cohérence
+- Faire des références subtiles qui parlent à l'audience existante
+` : ''}
 Instructions de rédaction :
 - Garde la STRUCTURE du plan original (même architecture narrative)
 - Adapte TOUS les exemples, références, métaphores à la niche
