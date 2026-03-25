@@ -111,13 +111,30 @@ Réponds avec ce JSON exact :
   }
 }`
 
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 2000,
-      system: systemPrompt,
-      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-      messages: [{ role: 'user', content: userMessage }],
-    })
+    // Retry logic for overloaded API
+    let response
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        response = await anthropic.messages.create({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 2000,
+          system: systemPrompt,
+          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+          messages: [{ role: 'user', content: userMessage }],
+        })
+        break
+      } catch (err: unknown) {
+        const apiErr = err as { status?: number; message?: string }
+        if (apiErr.status === 529 && attempt < 2) {
+          await new Promise(r => setTimeout(r, 2000 * (attempt + 1)))
+          continue
+        }
+        throw err
+      }
+    }
+    if (!response) {
+      throw new Error('L\'API Claude est temporairement surchargée. Réessaie dans quelques secondes.')
+    }
 
     // Extract text from response
     const textContent = response.content

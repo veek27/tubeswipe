@@ -35,8 +35,9 @@ export default function Home() {
       })
 
       if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Erreur lors de l\'analyse')
+        const data = await res.json().catch(() => ({}))
+        const errMsg = data.error || (res.status === 529 ? 'L\'IA est temporairement surchargée. Réessaie dans quelques secondes.' : `Erreur ${res.status} lors de l'analyse`)
+        throw new Error(errMsg)
       }
 
       const data = await res.json()
