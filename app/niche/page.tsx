@@ -62,7 +62,7 @@ export default function NichePage() {
 
   return (
     <div className="min-h-screen px-5 py-10">
-      <div className="max-w-[680px] mx-auto">
+      <div className="max-w-[800px] mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -96,33 +96,35 @@ export default function NichePage() {
           transition={{ duration: 0.4, delay: 0.1 }}
           className="bg-surface border border-border rounded-2xl p-6 sm:p-8"
         >
-          <div className="space-y-5">
-            {/* Niche + ICP side by side */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-2">
-                  Ma niche / thématique <span className="text-accent">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={niche}
-                  onChange={(e) => setNiche(e.target.value)}
-                  placeholder="ex: fitness pour femmes actives"
-                  className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-dim font-mono transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-2">
-                  Mon ICP (profil client idéal) <span className="text-accent">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={icp}
-                  onChange={(e) => setIcp(e.target.value)}
-                  placeholder="ex: femmes 28-40 ans, cadres, peu de temps"
-                  className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-dim font-mono transition-all"
-                />
-              </div>
+          <div className="space-y-6">
+            {/* Niche */}
+            <div>
+              <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-2">
+                Ma niche / thématique <span className="text-accent">*</span>
+              </label>
+              <p className="text-text-dim text-xs mb-3">De quoi parle ta chaîne ? Quel est ton domaine principal ?</p>
+              <textarea
+                value={niche}
+                onChange={(e) => setNiche(e.target.value)}
+                rows={2}
+                placeholder="ex: Je parle de fitness et nutrition pour les femmes actives qui veulent se remettre en forme sans passer 2h à la salle"
+                className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3.5 text-sm text-text-primary placeholder:text-text-dim font-mono transition-all resize-y"
+              />
+            </div>
+
+            {/* ICP */}
+            <div>
+              <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-2">
+                Mon audience cible (ICP) <span className="text-accent">*</span>
+              </label>
+              <p className="text-text-dim text-xs mb-3">Qui regarde tes vidéos ? Âge, situation, problèmes, aspirations...</p>
+              <textarea
+                value={icp}
+                onChange={(e) => setIcp(e.target.value)}
+                rows={2}
+                placeholder="ex: Femmes 25-40 ans, cadres ou entrepreneures, peu de temps, veulent des résultats visibles rapidement sans régime restrictif"
+                className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3.5 text-sm text-text-primary placeholder:text-text-dim font-mono transition-all resize-y"
+              />
             </div>
 
             {/* Angle */}
@@ -130,12 +132,13 @@ export default function NichePage() {
               <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-2">
                 Mon angle / positionnement unique
               </label>
-              <input
-                type="text"
+              <p className="text-text-dim text-xs mb-3">Qu&apos;est-ce qui te différencie des autres créateurs sur le même sujet ?</p>
+              <textarea
                 value={angle}
                 onChange={(e) => setAngle(e.target.value)}
-                placeholder="ex: méthode minimaliste, 20 min/jour, sans salle de sport"
-                className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-dim font-mono transition-all"
+                rows={2}
+                placeholder="ex: Approche minimaliste, 20 min/jour max, sans salle de sport, basée sur la science. Je démonte les mythes du fitness traditionnel."
+                className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3.5 text-sm text-text-primary placeholder:text-text-dim font-mono transition-all resize-y"
               />
             </div>
 
@@ -144,12 +147,13 @@ export default function NichePage() {
               <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-2">
                 Ton style de contenu <span className="text-text-dim">(optionnel)</span>
               </label>
-              <input
-                type="text"
+              <p className="text-text-dim text-xs mb-3">Comment tu parles à ta caméra ? Le ton, le format, l&apos;énergie...</p>
+              <textarea
                 value={style}
                 onChange={(e) => setStyle(e.target.value)}
-                placeholder="ex: direct, pratique, avec de l'humour, format storytelling"
-                className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-dim font-mono transition-all"
+                rows={2}
+                placeholder="ex: Direct et cash, pas de blabla, format face caméra avec des coupes dynamiques, un peu d'humour sarcastique"
+                className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3.5 text-sm text-text-primary placeholder:text-text-dim font-mono transition-all resize-y"
               />
             </div>
 
@@ -158,12 +162,13 @@ export default function NichePage() {
               <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-2">
                 Infos supplémentaires <span className="text-text-dim">(optionnel)</span>
               </label>
+              <p className="text-text-dim text-xs mb-3">Tout ce qui peut aider à personnaliser le script : ton produit, tes valeurs, un CTA spécifique...</p>
               <textarea
                 value={extra}
                 onChange={(e) => setExtra(e.target.value)}
                 rows={3}
-                placeholder="Contraintes, valeurs, éléments importants à inclure..."
-                className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-dim font-mono transition-all resize-y"
+                placeholder="ex: Je vends un programme en ligne à 97€, je veux que le script mentionne subtilement mon offre. Je ne veux jamais de body shaming dans mes contenus."
+                className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3.5 text-sm text-text-primary placeholder:text-text-dim font-mono transition-all resize-y"
               />
             </div>
           </div>
