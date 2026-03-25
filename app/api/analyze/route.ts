@@ -113,11 +113,11 @@ Réponds avec ce JSON exact :
   }
 }`
 
-    // Retry logic with exponential backoff (5 attempts, up to ~60s total wait)
+    // Retry with long waits to respect rate limits (30K tokens/min on Tier 1)
     let response
     let lastError: unknown = null
 
-    for (let attempt = 0; attempt < 5; attempt++) {
+    for (let attempt = 0; attempt < 3; attempt++) {
       try {
         response = await anthropic.messages.create({
           model: 'claude-sonnet-4-20250514',
@@ -130,20 +130,20 @@ Réponds avec ce JSON exact :
       } catch (err: unknown) {
         lastError = err
         const apiErr = err as { status?: number }
-        if (apiErr.status === 529 && attempt < 4) {
-          // Wait 5s, 10s, 15s, 20s between retries
-          await new Promise(r => setTimeout(r, 5000 * (attempt + 1)))
+        if ((apiErr.status === 529 || apiErr.status === 429) && attempt < 2) {
+          // Wait 15s, then 30s — respect the rate limit window
+          await new Promise(r => setTimeout(r, 15000 * (attempt + 1)))
           continue
         }
-        if (apiErr.status === 529) break
+        if (apiErr.status === 529 || apiErr.status === 429) break
         throw err
       }
     }
 
     if (!response) {
-      console.error('API overloaded after 5 attempts:', lastError)
+      console.error('API failed after retries:', lastError)
       return NextResponse.json(
-        { error: 'L\'IA est temporairement surchargée. Réessaie dans 1 minute.' },
+        { error: 'L\'IA est temporairement surchargée. Attends 1 minute et réessaie.' },
         { status: 503 }
       )
     }
