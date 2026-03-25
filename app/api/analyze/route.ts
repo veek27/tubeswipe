@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 
+export const maxDuration = 60 // Allow up to 60s for retries on Vercel
+
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 })
@@ -111,50 +113,37 @@ Réponds avec ce JSON exact :
   }
 }`
 
-    // Try models in order with retry logic
-    const models = ['claude-sonnet-4-20250514', 'claude-3-5-sonnet-20241022']
+    // Retry logic with exponential backoff (5 attempts, up to ~60s total wait)
     let response
     let lastError: unknown = null
 
-    for (const model of models) {
-      for (let attempt = 0; attempt < 3; attempt++) {
-        try {
-          if (model === 'claude-sonnet-4-20250514') {
-            response = await anthropic.messages.create({
-              model,
-              max_tokens: 2000,
-              system: systemPrompt,
-              tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-              messages: [{ role: 'user', content: userMessage }],
-            })
-          } else {
-            response = await anthropic.messages.create({
-              model,
-              max_tokens: 2000,
-              system: systemPrompt,
-              messages: [{ role: 'user', content: userMessage }],
-            })
-          }
-          break
-        } catch (err: unknown) {
-          lastError = err
-          const apiErr = err as { status?: number }
-          if (apiErr.status === 529 && attempt < 2) {
-            await new Promise(r => setTimeout(r, 3000 * (attempt + 1)))
-            continue
-          }
-          // If overloaded on last attempt, try next model
-          if (apiErr.status === 529) break
-          throw err
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        response = await anthropic.messages.create({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 2000,
+          system: systemPrompt,
+          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+          messages: [{ role: 'user', content: userMessage }],
+        })
+        break
+      } catch (err: unknown) {
+        lastError = err
+        const apiErr = err as { status?: number }
+        if (apiErr.status === 529 && attempt < 4) {
+          // Wait 5s, 10s, 15s, 20s between retries
+          await new Promise(r => setTimeout(r, 5000 * (attempt + 1)))
+          continue
         }
+        if (apiErr.status === 529) break
+        throw err
       }
-      if (response) break
     }
 
     if (!response) {
-      console.error('All models failed:', lastError)
+      console.error('API overloaded after 5 attempts:', lastError)
       return NextResponse.json(
-        { error: 'L\'IA est temporairement surchargée. Réessaie dans 30 secondes.' },
+        { error: 'L\'IA est temporairement surchargée. Réessaie dans 1 minute.' },
         { status: 503 }
       )
     }
