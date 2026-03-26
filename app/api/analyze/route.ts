@@ -154,20 +154,46 @@ Réponds avec ce JSON exact :
       .map((block) => block.text)
       .join('\n')
 
-    // Parse JSON response
+    // Parse JSON response — strip citation tags from web search
     let analysis
     try {
-      const cleaned = textContent.replace(/```json|```/g, '').trim()
+      const cleaned = textContent
+        .replace(/```json|```/g, '')
+        .replace(/<cite[^>]*>/g, '')
+        .replace(/<\/cite>/g, '')
+        .trim()
       analysis = JSON.parse(cleaned)
     } catch {
       // Try to extract JSON from the response
       const jsonMatch = textContent.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
-        analysis = JSON.parse(jsonMatch[0])
+        const cleanedMatch = jsonMatch[0]
+          .replace(/<cite[^>]*>/g, '')
+          .replace(/<\/cite>/g, '')
+        analysis = JSON.parse(cleanedMatch)
       } else {
         throw new Error('Impossible de parser la réponse de Claude')
       }
     }
+
+    // Deep clean: remove any remaining citation tags in all string values
+    const stripCitations = (obj: unknown): unknown => {
+      if (typeof obj === 'string') {
+        return obj.replace(/<cite[^>]*>/g, '').replace(/<\/cite>/g, '').trim()
+      }
+      if (Array.isArray(obj)) {
+        return obj.map(stripCitations)
+      }
+      if (obj && typeof obj === 'object') {
+        const cleaned: Record<string, unknown> = {}
+        for (const [key, value] of Object.entries(obj)) {
+          cleaned[key] = stripCitations(value)
+        }
+        return cleaned
+      }
+      return obj
+    }
+    analysis = stripCitations(analysis)
 
     return NextResponse.json({ videoInfo, analysis })
   } catch (error: unknown) {
