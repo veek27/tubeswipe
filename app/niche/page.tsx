@@ -176,11 +176,24 @@ export default function NichePage() {
       })
 
       if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Erreur lors de la génération')
+        let errorMsg = 'Erreur lors de la génération'
+        try {
+          const data = await res.json()
+          errorMsg = data.error || errorMsg
+        } catch {
+          if (res.status === 504) errorMsg = 'Le serveur a mis trop de temps. Réessaie.'
+          else if (res.status === 503) errorMsg = 'L\'IA est temporairement surchargée. Attends 1 minute et réessaie.'
+          else errorMsg = `Erreur serveur (${res.status}). Réessaie.`
+        }
+        throw new Error(errorMsg)
       }
 
-      const data = await res.json()
+      let data
+      try {
+        data = await res.json()
+      } catch {
+        throw new Error('Réponse invalide du serveur. Réessaie.')
+      }
       setScript(data.script)
       setStoreLoading(false)
       router.push('/script')
