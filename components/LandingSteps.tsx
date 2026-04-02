@@ -392,47 +392,45 @@ export default function LandingSteps() {
     {
       num: 2,
       title: 'Analyse complète',
-      desc: 'Sujet, angle, mots-clés, structure, tendances — tout est décortiqué pour toi.',
+      desc: 'Sujet, angle, mots-clés, structure, tendances — tout décortiqué.',
       component: <StepAnalysis />,
     },
     {
       num: 3,
       title: 'Script généré',
-      desc: 'Un script personnalisé, prêt à tourner, adapté à ta niche et ton style.',
+      desc: 'Un script prêt à tourner, adapté à ta niche et ton style.',
       component: <StepScript />,
     },
   ]
 
   return (
-    <div className="mt-20 space-y-16 sm:space-y-20">
+    <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-5">
       {steps.map((step, i) => (
         <motion.div
           key={step.num}
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className={`flex flex-col ${i % 2 === 1 ? 'sm:flex-row-reverse' : 'sm:flex-row'} items-center gap-8 sm:gap-12`}
+          viewport={{ once: true, margin: '-50px' }}
+          transition={{ duration: 0.5, delay: i * 0.12 }}
+          className="text-center"
         >
           {/* Visual */}
-          <div className="w-full sm:w-1/2 max-w-[320px]">
+          <div className="w-full mb-4">
             {step.component}
           </div>
 
           {/* Text */}
-          <div className={`w-full sm:w-1/2 ${i % 2 === 1 ? 'sm:text-right' : 'sm:text-left'} text-center`}>
-            <div className={`inline-flex items-center gap-3 mb-3 ${i % 2 === 1 ? 'sm:flex-row-reverse' : ''}`}>
-              <span className="w-8 h-8 rounded-full bg-accent/15 text-accent text-sm font-bold flex items-center justify-center flex-shrink-0">
-                {step.num}
-              </span>
-              <h3 className="font-display text-xl sm:text-2xl font-bold tracking-tight">
-                {step.title}
-              </h3>
-            </div>
-            <p className="text-text-muted text-sm leading-relaxed max-w-xs mx-auto sm:mx-0">
-              {step.desc}
-            </p>
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <span className="w-6 h-6 rounded-full bg-accent/15 text-accent text-xs font-bold flex items-center justify-center flex-shrink-0">
+              {step.num}
+            </span>
+            <h3 className="font-display text-base font-bold tracking-tight">
+              {step.title}
+            </h3>
           </div>
+          <p className="text-text-muted text-xs leading-relaxed max-w-[220px] mx-auto">
+            {step.desc}
+          </p>
         </motion.div>
       ))}
     </div>

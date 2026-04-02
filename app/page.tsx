@@ -133,7 +133,7 @@ export default function Home() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="relative z-10 w-full max-w-[640px] text-center min-h-screen flex flex-col items-center justify-center"
+        className="relative z-10 w-full max-w-[640px] text-center pt-28 pb-10 flex flex-col items-center justify-center"
       >
         {/* Spacer for fixed nav */}
         <div className="mb-8" />
@@ -237,7 +237,7 @@ export default function Home() {
       </motion.div>
 
       {/* Animated Steps */}
-      <div className="relative z-10 w-full max-w-[800px] pb-20">
+      <div className="relative z-10 w-full max-w-[900px] pb-20">
         <LandingSteps />
       </div>
 
