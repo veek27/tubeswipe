@@ -133,7 +133,7 @@ export default function Home() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="relative z-10 w-full max-w-[640px] text-center pt-28 pb-10 flex flex-col items-center justify-center"
+        className="relative z-10 w-full max-w-[780px] text-center pt-28 pb-10 flex flex-col items-center justify-center"
       >
         {/* Spacer for fixed nav */}
         <div className="mb-8" />
@@ -154,22 +154,23 @@ export default function Home() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="bg-surface border border-border rounded-2xl p-2 shadow-lg shadow-black/20"
+          className="bg-surface border border-border rounded-2xl p-2 shadow-lg shadow-black/20 w-full"
         >
-          <div className="flex flex-col sm:flex-row gap-2">
+          <div style={{ display: 'flex', flexDirection: 'row', gap: '8px' }}>
             <input
               type="text"
               value={url}
               onChange={(e) => { setUrl(e.target.value); setError('') }}
               onKeyDown={(e) => e.key === 'Enter' && !loading && handleAnalyze()}
               placeholder="Colle un lien YouTube ici..."
-              className="flex-1 bg-surface-2 border border-border rounded-xl px-4 py-3.5 text-sm text-text-primary placeholder:text-text-dim font-mono transition-all"
+              style={{ flex: '1 1 0%', minWidth: 0 }}
+              className="bg-surface-2 border border-border rounded-xl px-4 py-3.5 text-sm text-text-primary placeholder:text-text-dim font-mono transition-all"
               disabled={loading}
             />
             <button
               onClick={handleAnalyze}
               disabled={loading}
-              className="bg-accent hover:bg-accent-hover text-white font-semibold px-6 py-3.5 rounded-xl text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 whitespace-nowrap"
+              className="bg-accent hover:bg-accent-hover text-white font-semibold px-5 py-3.5 rounded-xl text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0"
             >
               {loading ? (
                 <>
@@ -186,10 +187,13 @@ export default function Home() {
               )}
             </button>
           </div>
-          <p className="text-center text-[11px] text-text-dim mt-2 px-1">
+          <p className="text-center text-[11px] text-text-dim mt-2 px-1 flex items-center justify-center gap-2">
             <span className="text-accent font-semibold">1 analyse + 1 script offerts</span>
-            <span className="mx-1.5 text-white/10">|</span>
-            <span>CB non requise</span>
+            <span className="text-white/10">|</span>
+            <span className="inline-flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-emerald-400 font-semibold">CB non requise</span>
+            </span>
           </p>
         </motion.div>
 
