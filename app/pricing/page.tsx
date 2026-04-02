@@ -152,7 +152,7 @@ export default function PricingPage() {
                 transition={{ duration: 0.4, delay: 0.1 + i * 0.08 }}
                 className={`relative bg-surface rounded-2xl p-6 flex flex-col transition-all ${
                   isCurrentPlan
-                    ? 'border-2 border-accent shadow-lg shadow-accent/10'
+                    ? 'border-2 border-emerald-500 shadow-lg shadow-emerald-500/10'
                     : isPro
                       ? 'border border-accent/40 shadow-lg shadow-accent/5'
                       : 'border border-border'
@@ -161,7 +161,7 @@ export default function PricingPage() {
                 {/* Current plan badge */}
                 {isCurrentPlan && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="bg-accent text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full flex items-center gap-1.5">
+                    <span className="bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full flex items-center gap-1.5">
                       <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
@@ -203,7 +203,7 @@ export default function PricingPage() {
                 {/* Button — always at bottom thanks to flex */}
                 {plan.cta ? (
                   isCurrentPlan ? (
-                    <div className="w-full py-3 rounded-xl text-sm font-semibold text-center bg-accent/10 text-accent border border-accent/20">
+                    <div className="w-full py-3 rounded-xl text-sm font-semibold text-center bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                       Forfait actuel
                     </div>
                   ) : (
@@ -220,7 +220,7 @@ export default function PricingPage() {
                   )
                 ) : (
                   isCurrentPlan ? (
-                    <div className="w-full py-3 rounded-xl text-sm font-semibold text-center bg-accent/10 text-accent border border-accent/20">
+                    <div className="w-full py-3 rounded-xl text-sm font-semibold text-center bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                       Forfait actuel
                     </div>
                   ) : (
