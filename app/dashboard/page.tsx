@@ -316,7 +316,7 @@ export default function DashboardPage() {
           {user.plan === 'free' ? (
             <button
               onClick={() => router.push('/pricing')}
-              className="bg-accent hover:bg-accent-hover text-white font-semibold px-4 py-2.5 rounded-xl text-xs transition-all flex items-center gap-2"
+              className="bg-white/[0.06] hover:bg-white/[0.10] border border-white/[0.10] text-text-primary font-semibold px-4 py-2.5 rounded-xl text-xs transition-all flex items-center gap-2"
             >
               Obtenir plus de crédits
               <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
