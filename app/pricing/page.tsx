@@ -13,10 +13,10 @@ const plans = [
     period: '',
     credits: 1,
     features: [
-      { text: '1 analyse complète offerte', highlight: true },
-      { text: '1 script personnalisé offert', highlight: true },
-      { text: 'Décryptage sujet, angle & structure', highlight: false },
-      { text: 'Tendances & opportunités', highlight: false },
+      '1 analyse complète',
+      '1 script personnalisé',
+      'Décryptage sujet, angle & structure',
+      'Tendances & opportunités',
     ],
     cta: null,
     popular: false,
@@ -28,12 +28,12 @@ const plans = [
     period: '/mois',
     credits: 10,
     features: [
-      { text: '10 crédits par mois', highlight: true },
-      { text: 'Analyses illimitées (1 crédit chacune)', highlight: false },
-      { text: 'Scripts adaptés à ta niche & ton ICP', highlight: false },
-      { text: 'Connecte ta chaîne YouTube', highlight: false },
-      { text: 'Profils & historique sauvegardés', highlight: false },
-      { text: 'Détection des outliers & tendances', highlight: false },
+      '10 analyses + 10 scripts par mois',
+      'Scripts adaptés à ta niche & ton ICP',
+      'Connexion de ta chaîne YouTube',
+      'Profils sauvegardés',
+      'Historique complet',
+      'Détection des outliers & tendances',
     ],
     cta: 'Passer à Starter',
     popular: false,
@@ -45,13 +45,12 @@ const plans = [
     period: '/mois',
     credits: 35,
     features: [
-      { text: '35 crédits par mois', highlight: true },
-      { text: 'Tout le plan Starter inclus', highlight: false },
-      { text: 'Scripts enrichis par ta chaîne YouTube', highlight: true },
-      { text: 'Profils multiples (plusieurs niches)', highlight: false },
-      { text: 'Historique complet des analyses', highlight: false },
-      { text: 'Accès prioritaire aux nouvelles features', highlight: false },
-      { text: 'Support prioritaire', highlight: false },
+      '35 analyses + 35 scripts par mois',
+      'Tout le plan Starter inclus',
+      'Scripts enrichis par ta chaîne YouTube',
+      'Profils multiples (plusieurs niches)',
+      'Accès prioritaire aux nouvelles features',
+      'Support prioritaire',
     ],
     cta: 'Passer à Pro',
     popular: true,
@@ -192,10 +191,10 @@ export default function PricingPage() {
                 <div className="space-y-2.5 mb-6 flex-1">
                   {plan.features.map((feature, j) => (
                     <div key={j} className="flex items-start gap-2 text-sm">
-                      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke={feature.highlight || isCurrentPlan || isPro ? '#E40000' : '#555'} strokeWidth="2.5" className="flex-shrink-0 mt-0.5">
+                      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke={isCurrentPlan ? '#22c55e' : isPro ? '#E40000' : '#555'} strokeWidth="2.5" className="flex-shrink-0 mt-0.5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
-                      <span className={feature.highlight ? 'text-text-primary font-medium' : 'text-text-muted'}>{feature.text}</span>
+                      <span className="text-text-muted">{feature}</span>
                     </div>
                   ))}
                 </div>
