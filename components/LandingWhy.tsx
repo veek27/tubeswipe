@@ -101,105 +101,242 @@ export default function LandingWhy() {
         </motion.div>
       </div>
 
-      {/* Open Loop explainer - visual */}
+      {/* Deep dive: anatomy of a viral video */}
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-60px' }}
         transition={{ duration: 0.5 }}
-        className="bg-surface border border-border rounded-2xl p-6 sm:p-8 max-w-[700px] mx-auto relative overflow-hidden"
+        className="text-center mb-12"
       >
-        <div className="flex flex-col sm:flex-row gap-6 items-start">
-          {/* Left: Open loop visual */}
-          <div className="w-full sm:w-[200px] flex-shrink-0">
-            <div className="bg-[#0a0a0a] rounded-xl border border-white/[0.06] p-4 space-y-3">
-              {/* Loop visual */}
-              <div className="flex items-center gap-2 mb-1">
-                <div className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center">
-                  <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="#E40000" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15" />
-                  </svg>
-                </div>
-                <span className="text-[9px] font-bold text-accent uppercase tracking-wider">Open Loop</span>
-              </div>
-
-              {/* Hook example */}
-              <div className="space-y-1.5">
-                <div className="flex items-start gap-2">
-                  <span className="text-[8px] text-accent font-bold mt-0.5">?</span>
-                  <p className="text-[8px] text-white/50 leading-relaxed italic">
-                    &quot;Tu sais pourquoi 90% des créateurs ne dépassent jamais 1000 abonnés ?&quot;
-                  </p>
-                </div>
-                <div className="h-px bg-white/[0.04]" />
-                <div className="flex items-center gap-1.5">
-                  <div className="w-full h-1 bg-white/[0.06] rounded-full overflow-hidden">
-                    <div className="h-full w-[85%] bg-gradient-to-r from-accent to-accent/40 rounded-full" />
-                  </div>
-                  <span className="text-[7px] text-white/30 flex-shrink-0">85% rétention</span>
-                </div>
-              </div>
-
-              {/* Contrast */}
-              <div className="space-y-1.5 opacity-40">
-                <div className="flex items-start gap-2">
-                  <span className="text-[8px] text-white/30 font-bold mt-0.5">—</span>
-                  <p className="text-[8px] text-white/30 leading-relaxed italic">
-                    &quot;Salut, aujourd&apos;hui on va parler de YouTube.&quot;
-                  </p>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-full h-1 bg-white/[0.06] rounded-full overflow-hidden">
-                    <div className="h-full w-[25%] bg-white/10 rounded-full" />
-                  </div>
-                  <span className="text-[7px] text-white/20 flex-shrink-0">25% rétention</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right: Explanation */}
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="h-4 w-0.5 bg-accent rounded-full" />
-              <h3 className="font-display font-bold text-base">C&apos;est quoi un open loop ?</h3>
-            </div>
-            <p className="text-text-muted text-xs leading-relaxed mb-4">
-              Un <span className="text-text-primary font-medium">open loop</span>, c&apos;est une question ou une promesse que tu poses au début de ta vidéo sans donner la réponse tout de suite. Le cerveau humain déteste les boucles non fermées — il <span className="text-text-primary font-medium">doit</span> connaître la suite.
-            </p>
-            <p className="text-text-muted text-xs leading-relaxed mb-4">
-              Résultat : ta rétention explose, YouTube pousse ta vidéo, et tu rentres dans le cercle vertueux de l&apos;algorithme.
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <span className="px-2.5 py-1 rounded-lg bg-accent/8 border border-accent/12 text-[10px] text-accent font-medium">
-                Rétention
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-accent/8 border border-accent/12 text-[10px] text-accent font-medium">
-                Algorithme
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-accent/8 border border-accent/12 text-[10px] text-accent font-medium">
-                Watch time
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Subtle bg glow */}
-        <div className="absolute -top-20 -right-20 w-40 h-40 bg-accent/[0.03] rounded-full blur-3xl pointer-events-none" />
+        <h3 className="font-display text-xl sm:text-2xl font-extrabold tracking-tight mb-3">
+          Anatomie d&apos;une vidéo qui <span className="text-accent">performe</span>
+        </h3>
+        <p className="text-text-dim text-xs max-w-md mx-auto">
+          Chaque vidéo virale repose sur les mêmes piliers. Voici ce qui sépare 1 000 vues de 1 000 000.
+        </p>
       </motion.div>
 
-      {/* Bottom quote */}
+      {/* Anatomy blocks - 2x2 grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-16">
+
+        {/* Block 1 - Hook */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-40px' }}
+          transition={{ duration: 0.5, delay: 0 }}
+          className="bg-surface border border-border rounded-2xl p-5 relative overflow-hidden group hover:border-accent/20 transition-colors"
+        >
+          <div className="flex items-start gap-4">
+            {/* Mini visual */}
+            <div className="w-16 flex-shrink-0">
+              <div className="bg-[#0a0a0a] rounded-lg border border-white/[0.06] p-2.5 space-y-1.5">
+                <div className="h-1.5 bg-accent/40 rounded-full w-full" />
+                <div className="h-1 bg-white/8 rounded-full w-[80%]" />
+                <div className="h-1 bg-white/5 rounded-full w-[60%]" />
+                <div className="flex items-center gap-1 mt-1">
+                  <div className="w-full h-[3px] bg-white/[0.06] rounded-full overflow-hidden">
+                    <div className="h-full w-[90%] bg-accent rounded-full" />
+                  </div>
+                </div>
+                <p className="text-[5px] text-white/20 text-center">0:00 — 0:15</p>
+              </div>
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="px-1.5 py-0.5 rounded bg-accent/15 text-[9px] font-bold text-accent">01</span>
+                <h4 className="font-display font-bold text-sm">Le hook : 3 secondes pour tout gagner</h4>
+              </div>
+              <p className="text-text-muted text-xs leading-relaxed">
+                Les 3 premières secondes décident de tout. Un bon hook crée une <span className="text-text-primary font-medium">tension</span> immédiate — une question, une stat choc, une promesse. Si ton viewer ne se dit pas &quot;attends, quoi ?&quot; dans les 3 secondes, il est parti.
+              </p>
+            </div>
+          </div>
+          <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-accent/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+        </motion.div>
+
+        {/* Block 2 - Open Loops */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-40px' }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="bg-surface border border-border rounded-2xl p-5 relative overflow-hidden group hover:border-accent/20 transition-colors"
+        >
+          <div className="flex items-start gap-4">
+            <div className="w-16 flex-shrink-0">
+              <div className="bg-[#0a0a0a] rounded-lg border border-white/[0.06] p-2.5 space-y-1">
+                <div className="flex items-center gap-1">
+                  <span className="text-[6px] text-accent">?</span>
+                  <div className="h-1 bg-accent/30 rounded-full flex-1" />
+                </div>
+                <div className="h-1 bg-white/6 rounded-full w-full" />
+                <div className="h-1 bg-white/6 rounded-full w-[70%]" />
+                <div className="flex items-center gap-1">
+                  <span className="text-[6px] text-accent">?</span>
+                  <div className="h-1 bg-accent/20 rounded-full flex-1" />
+                </div>
+                <div className="h-1 bg-white/6 rounded-full w-[90%]" />
+                <div className="flex items-center gap-1 mt-0.5">
+                  <svg width="6" height="6" fill="none" viewBox="0 0 24 24" stroke="#E40000" strokeWidth="3">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
+                  </svg>
+                  <span className="text-[5px] text-white/20">boucles ouvertes</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="px-1.5 py-0.5 rounded bg-accent/15 text-[9px] font-bold text-accent">02</span>
+                <h4 className="font-display font-bold text-sm">Open loops : la rétention invisible</h4>
+              </div>
+              <p className="text-text-muted text-xs leading-relaxed">
+                Un <span className="text-text-primary font-medium">open loop</span>, c&apos;est poser une question sans donner la réponse tout de suite. Le cerveau humain déteste les boucles ouvertes — il <span className="text-text-primary font-medium">doit</span> connaître la suite. Les meilleures vidéos en placent 3 à 5 dans les 60 premières secondes.
+              </p>
+            </div>
+          </div>
+          <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-accent/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+        </motion.div>
+
+        {/* Block 3 - Structure */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-40px' }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="bg-surface border border-border rounded-2xl p-5 relative overflow-hidden group hover:border-accent/20 transition-colors"
+        >
+          <div className="flex items-start gap-4">
+            <div className="w-16 flex-shrink-0">
+              <div className="bg-[#0a0a0a] rounded-lg border border-white/[0.06] p-2.5 space-y-1.5">
+                {['Hook', 'Problème', 'Solution', 'CTA'].map((s, i) => (
+                  <div key={s} className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 rounded-full bg-accent/15 text-[5px] text-accent font-bold flex items-center justify-center flex-shrink-0">{i+1}</span>
+                    <div className={`h-1 rounded-full flex-1 ${i === 0 ? 'bg-accent/30' : 'bg-white/8'}`} />
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="px-1.5 py-0.5 rounded bg-accent/15 text-[9px] font-bold text-accent">03</span>
+                <h4 className="font-display font-bold text-sm">Un bon script = une architecture</h4>
+              </div>
+              <p className="text-text-muted text-xs leading-relaxed">
+                Les vidéos qui performent ne sont pas improvisées. Elles suivent une structure précise : hook, problème, montée de tension, solution, CTA. Chaque partie a un rôle. Sans cette architecture, même le meilleur sujet du monde tombe à plat.
+              </p>
+            </div>
+          </div>
+          <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-accent/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+        </motion.div>
+
+        {/* Block 4 - Retention */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-40px' }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="bg-surface border border-border rounded-2xl p-5 relative overflow-hidden group hover:border-accent/20 transition-colors"
+        >
+          <div className="flex items-start gap-4">
+            <div className="w-16 flex-shrink-0">
+              <div className="bg-[#0a0a0a] rounded-lg border border-white/[0.06] p-2.5">
+                {/* Mini graph */}
+                <div className="flex items-end gap-[3px] h-10 justify-center">
+                  {[30, 25, 20, 15, 10, 8].map((h, i) => (
+                    <div key={i} className="w-1.5 rounded-t-sm bg-white/10" style={{ height: `${h}px` }} />
+                  ))}
+                </div>
+                <div className="h-px bg-white/[0.06] mt-1" />
+                <p className="text-[5px] text-white/20 text-center mt-1">sans structure</p>
+                <div className="flex items-end gap-[3px] h-10 justify-center mt-2">
+                  {[20, 28, 32, 35, 33, 30].map((h, i) => (
+                    <div key={i} className="w-1.5 rounded-t-sm bg-accent/50" style={{ height: `${h}px` }} />
+                  ))}
+                </div>
+                <div className="h-px bg-white/[0.06] mt-1" />
+                <p className="text-[5px] text-accent/50 text-center mt-1">avec structure</p>
+              </div>
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="px-1.5 py-0.5 rounded bg-accent/15 text-[9px] font-bold text-accent">04</span>
+                <h4 className="font-display font-bold text-sm">L&apos;algorithme récompense la rétention</h4>
+              </div>
+              <p className="text-text-muted text-xs leading-relaxed">
+                YouTube ne pousse pas les vidéos avec le plus de likes. Il pousse celles que les gens <span className="text-text-primary font-medium">regardent jusqu&apos;au bout</span>. Un script bien structuré avec des open loops, c&apos;est la différence entre une vidéo à 200 vues et une vidéo que l&apos;algorithme propulse dans les recommandations.
+              </p>
+            </div>
+          </div>
+          <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-accent/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+        </motion.div>
+      </div>
+
+      {/* Pain point → solution (subtle) */}
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-60px' }}
+        transition={{ duration: 0.5 }}
+        className="max-w-[640px] mx-auto mb-8"
+      >
+        {/* The pain */}
+        <div className="bg-surface border border-border rounded-2xl p-6 relative overflow-hidden">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-center">
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#555" strokeWidth="1.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <p className="text-text-muted text-xs font-medium">Le problème, tu le connais déjà.</p>
+          </div>
+
+          <div className="space-y-2.5 mb-5">
+            {[
+              'Regarder 10 vidéos pour comprendre ce qui marche dans ta niche',
+              'Prendre des notes sur la structure, les hooks, les transitions',
+              'Analyser les tendances, les mots-clés, les angles d\'attaque',
+              'Écrire un script de zéro en essayant de tout rassembler',
+              'Recommencer parce que le résultat sonne pas naturel',
+            ].map((pain, i) => (
+              <div key={i} className="flex items-start gap-2.5">
+                <span className="text-white/15 text-xs mt-px">
+                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </span>
+                <p className="text-text-dim text-xs leading-relaxed">{pain}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2 text-text-dim text-[11px]">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#555" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Temps estimé : <span className="text-white/40 font-medium line-through">3 à 5 heures</span></span>
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#E40000" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+            <span className="text-accent font-bold">3 minutes</span>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Closing line */}
       <motion.div
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
-        className="mt-12 text-center"
+        className="text-center mt-10 mb-4"
       >
-        <p className="text-text-dim text-xs max-w-md mx-auto leading-relaxed">
+        <p className="text-text-muted text-sm max-w-md mx-auto leading-relaxed font-medium">
           Les créateurs qui réussissent ne réinventent pas la roue.
-          <br />
-          <span className="text-text-muted font-medium">Ils trouvent ce qui marche, et le font mieux.</span>
+        </p>
+        <p className="text-text-dim text-xs mt-1">
+          Ils trouvent ce qui marche, et le font mieux.
         </p>
       </motion.div>
     </div>
