@@ -26,11 +26,11 @@ export default function LandingWhy() {
       {/* Hero statement */}
       <motion.div {...fadeUp} className="text-center mb-16 max-w-[620px] mx-auto">
         <h2 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight mb-4">
-          Le sujet fait
-          <span className="text-accent"> 80% de ton CTR.</span>
+          Sur YouTube, le sujet fait
+          <span className="text-accent"> 80% du résultat.</span>
         </h2>
         <p className="text-text-muted text-sm leading-relaxed">
-          Un bon sujet n&apos;a même pas besoin d&apos;une bonne miniature pour faire cliquer. Un sujet moyen avec un montage incroyable restera à 47 vues. Ce qui déclenche le clic, c&apos;est le sujet — et l&apos;angle avec lequel tu l&apos;attaques.
+          Ta caméra, ton montage, tes transitions — tout ça vient après. Un bon sujet avec un angle qui intrigue, c&apos;est ce qui déclenche le clic et fait que l&apos;algorithme pousse ta vidéo. Le sujet décide si ta vidéo explose ou reste invisible.
         </p>
       </motion.div>
 
@@ -260,10 +260,10 @@ export default function LandingWhy() {
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <span className="px-1.5 py-0.5 rounded bg-accent/15 text-[9px] font-bold text-accent">04</span>
-                <h4 className="font-display font-bold text-sm">CTR te lance, rétention te propulse</h4>
+                <h4 className="font-display font-bold text-sm">Le clic te lance, la rétention te propulse</h4>
               </div>
               <p className="text-text-muted text-xs leading-relaxed">
-                YouTube ne pousse pas les vidéos avec le plus de likes. Il pousse celles que les gens <span className="text-text-primary font-medium">regardent jusqu&apos;au bout</span>. Le CTR (taux de clic) dépend à 80% du sujet. La rétention (APV) dépend du script. Les deux ensemble, c&apos;est ce qui fait que l&apos;algo te met en recommandation.
+                YouTube ne pousse pas les vidéos avec le plus de likes. Il pousse celles que les gens <span className="text-text-primary font-medium">regardent jusqu&apos;au bout</span>. Le sujet + l&apos;angle déclenchent le clic. Le script maintient l&apos;attention. Les deux ensemble, c&apos;est ce qui fait que l&apos;algo te met en recommandation.
               </p>
             </div>
           </div>
