@@ -28,10 +28,10 @@ export default function AppNav() {
             src="/logo.png"
             alt="TubeSwipe"
             className="w-8 h-8 rounded-md"
-            initial={{ opacity: 0, rotate: -90, scale: 0.5 }}
+            initial={{ opacity: 0, rotate: -360, scale: 0.5 }}
             animate={{ opacity: 1, rotate: 0, scale: 1 }}
-            transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
-            whileHover={{ rotate: 12, scale: 1.1 }}
+            transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
+            whileHover={{ rotate: 360, transition: { duration: 0.6, ease: [0.25, 0.1, 0.25, 1] } }}
           />
           <span className="font-display font-bold text-lg text-white tracking-tight">tubeswipe</span>
         </button>
