@@ -5,6 +5,15 @@ import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '@/store/useStore'
 
+interface ScriptRecord {
+  id: string
+  analysis_id: string | null
+  script_content: string
+  niche: string
+  icp: string
+  created_at: string
+}
+
 interface AnalysisRecord {
   id: string
   youtube_url: string
@@ -13,14 +22,7 @@ interface AnalysisRecord {
   channel_name: string
   analysis: Record<string, unknown>
   created_at: string
-}
-
-interface ScriptRecord {
-  id: string
-  script_content: string
-  niche: string
-  icp: string
-  created_at: string
+  scripts?: ScriptRecord[]
 }
 
 interface ProfileRecord {
@@ -36,17 +38,16 @@ interface ProfileRecord {
   created_at: string
 }
 
-type Tab = 'analyses' | 'scripts' | 'profiles'
+type Tab = 'analyses' | 'profiles'
 
 export default function DashboardPage() {
   const router = useRouter()
   const { user, logout } = useStore()
   const [tab, setTab] = useState<Tab>('analyses')
   const [analyses, setAnalyses] = useState<AnalysisRecord[]>([])
-  const [scripts, setScripts] = useState<ScriptRecord[]>([])
   const [profiles, setProfiles] = useState<ProfileRecord[]>([])
   const [loading, setLoading] = useState(true)
-  const [expandedScript, setExpandedScript] = useState<string | null>(null)
+  const [expandedAnalysis, setExpandedAnalysis] = useState<string | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [showNewProfile, setShowNewProfile] = useState(false)
   const [newProfile, setNewProfile] = useState({ name: '', niche: '', icp: '', angle: '', style: '', extra: '' })
@@ -66,8 +67,14 @@ export default function DashboardPage() {
           body: JSON.stringify({ userId: user.id }),
         })
         const data = await res.json()
-        setAnalyses(data.analyses || [])
-        setScripts(data.scripts || [])
+        const allScripts: ScriptRecord[] = data.scripts || []
+
+        // Attach scripts to their analyses
+        const allAnalyses: AnalysisRecord[] = (data.analyses || []).map((a: AnalysisRecord) => ({
+          ...a,
+          scripts: allScripts.filter((s: ScriptRecord) => s.analysis_id === a.id),
+        }))
+        setAnalyses(allAnalyses)
         setProfiles(data.profiles || [])
       } catch (e) {
         console.error('Dashboard fetch error:', e)
@@ -139,11 +146,30 @@ export default function DashboardPage() {
     const d = new Date(dateStr)
     return d.toLocaleDateString('fr-FR', {
       day: 'numeric',
-      month: 'short',
+      month: 'long',
       year: 'numeric',
+    })
+  }
+
+  const formatTime = (dateStr: string) => {
+    const d = new Date(dateStr)
+    return d.toLocaleTimeString('fr-FR', {
       hour: '2-digit',
       minute: '2-digit',
     })
+  }
+
+  const timeAgo = (dateStr: string) => {
+    const d = new Date(dateStr)
+    const now = new Date()
+    const diffMs = now.getTime() - d.getTime()
+    const diffMin = Math.floor(diffMs / 60000)
+    const diffH = Math.floor(diffMin / 60)
+    const diffD = Math.floor(diffH / 24)
+    if (diffMin < 60) return `il y a ${diffMin}min`
+    if (diffH < 24) return `il y a ${diffH}h`
+    if (diffD < 7) return `il y a ${diffD}j`
+    return formatDate(dateStr)
   }
 
   if (!user) return null
@@ -151,7 +177,7 @@ export default function DashboardPage() {
   const tabs: { key: Tab; label: string; count: number; icon: React.ReactNode }[] = [
     {
       key: 'analyses',
-      label: 'Analyses',
+      label: 'Mes analyses',
       count: analyses.length,
       icon: (
         <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -161,18 +187,8 @@ export default function DashboardPage() {
       ),
     },
     {
-      key: 'scripts',
-      label: 'Scripts',
-      count: scripts.length,
-      icon: (
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-        </svg>
-      ),
-    },
-    {
       key: 'profiles',
-      label: 'Profils',
+      label: 'Mes profils',
       count: profiles.length,
       icon: (
         <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -193,33 +209,35 @@ export default function DashboardPage() {
           className="mb-8"
         >
           <div className="flex items-center justify-between mb-6">
-            <button
-              onClick={() => router.push('/')}
-              className="text-text-muted hover:text-text-primary text-sm flex items-center gap-2 transition-colors"
-            >
-              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-              Nouvelle analyse
-            </button>
-            <button
-              onClick={handleLogout}
-              className="text-text-dim hover:text-red-400 text-xs flex items-center gap-1.5 transition-colors"
-            >
-              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              Déconnexion
-            </button>
+            <div>
+              <div className="flex items-center gap-3 mb-1">
+                <div className="h-6 w-1 bg-accent rounded-full" />
+                <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight">
+                  Salut {user.first_name}
+                </h1>
+              </div>
+              <p className="text-text-muted text-sm ml-4">Ton espace personnel</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => router.push('/')}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-white text-xs font-semibold transition-all"
+              >
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                Nouvelle analyse
+              </button>
+              <button
+                onClick={handleLogout}
+                className="px-3 py-2.5 rounded-xl border border-border text-text-dim hover:text-red-400 hover:border-red-400/30 text-xs transition-all"
+              >
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
+            </div>
           </div>
-
-          <div className="flex items-center gap-3 mb-2">
-            <div className="h-6 w-1 bg-accent rounded-full" />
-            <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight">
-              Salut {user.first_name}
-            </h1>
-          </div>
-          <p className="text-text-muted text-sm ml-4">Ton historique et tes profils sauvegardés</p>
         </motion.div>
 
         {/* Credits Card */}
@@ -238,15 +256,15 @@ export default function DashboardPage() {
                 {user.credits} crédit{user.credits !== 1 ? 's' : ''} restant{user.credits !== 1 ? 's' : ''}
               </p>
               <p className="text-text-dim text-xs">
-                Forfait <span className={`font-medium ${
+                Forfait <span className={`font-medium capitalize ${
                   user.plan === 'pro' ? 'text-purple-400' :
                   user.plan === 'starter' ? 'text-amber-400' :
                   'text-text-muted'
-                } capitalize`}>{user.plan}</span>
+                }`}>{user.plan}</span>
               </p>
             </div>
           </div>
-          {user.plan === 'free' && (
+          {user.plan === 'free' ? (
             <button
               onClick={() => router.push('/pricing')}
               className="bg-accent hover:bg-accent-hover text-white font-semibold px-4 py-2.5 rounded-xl text-xs transition-all flex items-center gap-2"
@@ -256,8 +274,7 @@ export default function DashboardPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
             </button>
-          )}
-          {user.plan !== 'free' && (
+          ) : (
             <span className={`px-3 py-1.5 rounded-lg text-xs font-bold ${
               user.plan === 'pro' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
               'bg-amber-500/10 text-amber-400 border border-amber-500/20'
@@ -316,121 +333,143 @@ export default function DashboardPage() {
               >
                 {analyses.length === 0 ? (
                   <div className="bg-surface border border-border rounded-2xl p-12 text-center">
-                    <p className="text-text-dim text-sm mb-3">Aucune analyse pour le moment</p>
+                    <div className="w-14 h-14 rounded-2xl bg-surface-2 flex items-center justify-center mx-auto mb-4">
+                      <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#555" strokeWidth="1.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                      </svg>
+                    </div>
+                    <p className="text-text-dim text-sm mb-1">Aucune analyse pour le moment</p>
+                    <p className="text-text-dim text-xs mb-4">Lance ta première analyse pour commencer.</p>
                     <button
                       onClick={() => router.push('/')}
-                      className="text-accent hover:text-accent-hover text-sm font-medium transition-colors"
+                      className="bg-accent hover:bg-accent-hover text-white font-semibold px-5 py-2.5 rounded-xl text-xs transition-all"
                     >
                       Analyser une vidéo
                     </button>
                   </div>
                 ) : (
-                  analyses.map((a, i) => (
-                    <motion.div
-                      key={a.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      className="bg-surface border border-border rounded-2xl p-4 flex gap-4 items-start hover:border-accent/20 transition-colors"
-                    >
-                      {a.video_thumbnail && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={a.video_thumbnail}
-                          alt={a.video_title || ''}
-                          className="w-32 aspect-video object-cover rounded-lg flex-shrink-0"
-                        />
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <h3 className="font-semibold text-sm leading-snug mb-1 truncate">
-                          {a.video_title || 'Vidéo analysée'}
-                        </h3>
-                        {a.channel_name && (
-                          <p className="text-text-dim text-xs mb-2">{a.channel_name}</p>
-                        )}
-                        <p className="text-text-muted text-xs font-mono">{formatDate(a.created_at)}</p>
-                      </div>
-                    </motion.div>
-                  ))
-                )}
-              </motion.div>
-            )}
+                  analyses.map((a, i) => {
+                    const hasScripts = a.scripts && a.scripts.length > 0
+                    const isExpanded = expandedAnalysis === a.id
 
-            {/* Scripts Tab */}
-            {tab === 'scripts' && (
-              <motion.div
-                key="scripts"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="space-y-3"
-              >
-                {scripts.length === 0 ? (
-                  <div className="bg-surface border border-border rounded-2xl p-12 text-center">
-                    <p className="text-text-dim text-sm">Aucun script généré pour le moment</p>
-                  </div>
-                ) : (
-                  scripts.map((s, i) => (
-                    <motion.div
-                      key={s.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      className="bg-surface border border-border rounded-2xl overflow-hidden hover:border-accent/20 transition-colors"
-                    >
-                      <div
-                        className="p-4 flex items-center justify-between cursor-pointer"
-                        onClick={() => setExpandedScript(expandedScript === s.id ? null : s.id)}
+                    return (
+                      <motion.div
+                        key={a.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        className="bg-surface border border-border rounded-2xl overflow-hidden hover:border-accent/20 transition-colors"
                       >
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            {s.niche && (
-                              <span className="px-2 py-0.5 rounded-md bg-accent/10 text-accent text-[10px] font-medium">
-                                {s.niche.length > 30 ? s.niche.substring(0, 30) + '...' : s.niche}
-                              </span>
+                        <div className="p-4 flex gap-4 items-start">
+                          {a.video_thumbnail && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={a.video_thumbnail}
+                              alt={a.video_title || ''}
+                              className="w-36 aspect-video object-cover rounded-lg flex-shrink-0"
+                            />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-semibold text-sm leading-snug mb-1.5">
+                              {a.video_title || 'Vidéo analysée'}
+                            </h3>
+                            {a.channel_name && (
+                              <p className="text-text-dim text-xs mb-2 flex items-center gap-1.5">
+                                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                {a.channel_name}
+                              </p>
                             )}
-                          </div>
-                          <p className="text-text-muted text-xs font-mono">{formatDate(s.created_at)}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleCopyScript(s.id, s.script_content) }}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                              copiedId === s.id
-                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                                : 'bg-surface-2 border border-border text-text-muted hover:text-text-primary'
-                            }`}
-                          >
-                            {copiedId === s.id ? 'Copié !' : 'Copier'}
-                          </button>
-                          <svg
-                            width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"
-                            className={`text-text-dim transition-transform ${expandedScript === s.id ? 'rotate-180' : ''}`}
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </div>
-                      </div>
-
-                      <AnimatePresence>
-                        {expandedScript === s.id && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="px-4 pb-4 border-t border-border pt-4">
-                              <pre className="text-xs text-text-muted font-mono whitespace-pre-wrap leading-relaxed max-h-[400px] overflow-y-auto">
-                                {s.script_content}
-                              </pre>
+                            <div className="flex items-center gap-3 text-text-dim text-[11px]">
+                              <span className="flex items-center gap-1">
+                                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                {formatDate(a.created_at)}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                {formatTime(a.created_at)}
+                              </span>
+                              <span className="text-text-dim/60">{timeAgo(a.created_at)}</span>
                             </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </motion.div>
-                  ))
+
+                            {/* Script actions */}
+                            <div className="flex items-center gap-2 mt-3">
+                              {hasScripts ? (
+                                <>
+                                  <button
+                                    onClick={() => setExpandedAnalysis(isExpanded ? null : a.id)}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent/10 border border-accent/20 text-accent text-xs font-medium transition-all hover:bg-accent/20"
+                                  >
+                                    <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                    </svg>
+                                    {isExpanded ? 'Masquer le script' : 'Voir le script'}
+                                    <svg
+                                      width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"
+                                      className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                                    >
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    onClick={() => handleCopyScript(a.id, a.scripts![0].script_content)}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                                      copiedId === a.id
+                                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                                        : 'bg-surface-2 border border-border text-text-muted hover:text-text-primary'
+                                    }`}
+                                  >
+                                    {copiedId === a.id ? 'Copié !' : 'Copier'}
+                                  </button>
+                                </>
+                              ) : (
+                                <span className="text-text-dim text-[11px] flex items-center gap-1.5">
+                                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                  Pas de script généré
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Expanded script */}
+                        <AnimatePresence>
+                          {isExpanded && hasScripts && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="overflow-hidden"
+                            >
+                              {a.scripts!.map((s) => (
+                                <div key={s.id} className="px-4 pb-4 border-t border-border pt-4">
+                                  {s.niche && (
+                                    <div className="flex items-center gap-2 mb-3">
+                                      <span className="px-2 py-0.5 rounded-md bg-accent/10 text-accent text-[10px] font-medium">
+                                        {s.niche.length > 40 ? s.niche.substring(0, 40) + '...' : s.niche}
+                                      </span>
+                                      <span className="text-text-dim text-[10px] font-mono">{formatDate(s.created_at)} {formatTime(s.created_at)}</span>
+                                    </div>
+                                  )}
+                                  <pre className="text-xs text-text-muted font-mono whitespace-pre-wrap leading-relaxed max-h-[400px] overflow-y-auto">
+                                    {s.script_content}
+                                  </pre>
+                                </div>
+                              ))}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
+                    )
+                  })
                 )}
               </motion.div>
             )}
@@ -467,54 +506,24 @@ export default function DashboardPage() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label className="block text-[10px] font-bold text-text-dim uppercase tracking-wider mb-1">Niche</label>
-                          <textarea
-                            value={newProfile.niche}
-                            onChange={(e) => setNewProfile({ ...newProfile, niche: e.target.value })}
-                            placeholder="De quoi parle ta chaîne ?"
-                            rows={2}
-                            className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono resize-y"
-                          />
+                          <textarea value={newProfile.niche} onChange={(e) => setNewProfile({ ...newProfile, niche: e.target.value })} placeholder="De quoi parle ta chaîne ?" rows={2} className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono resize-y" />
                         </div>
                         <div>
                           <label className="block text-[10px] font-bold text-text-dim uppercase tracking-wider mb-1">ICP (audience cible)</label>
-                          <textarea
-                            value={newProfile.icp}
-                            onChange={(e) => setNewProfile({ ...newProfile, icp: e.target.value })}
-                            placeholder="Qui regarde tes vidéos ?"
-                            rows={2}
-                            className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono resize-y"
-                          />
+                          <textarea value={newProfile.icp} onChange={(e) => setNewProfile({ ...newProfile, icp: e.target.value })} placeholder="Qui regarde tes vidéos ?" rows={2} className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono resize-y" />
                         </div>
                         <div>
                           <label className="block text-[10px] font-bold text-text-dim uppercase tracking-wider mb-1">Angle</label>
-                          <textarea
-                            value={newProfile.angle}
-                            onChange={(e) => setNewProfile({ ...newProfile, angle: e.target.value })}
-                            placeholder="Ton positionnement unique"
-                            rows={2}
-                            className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono resize-y"
-                          />
+                          <textarea value={newProfile.angle} onChange={(e) => setNewProfile({ ...newProfile, angle: e.target.value })} placeholder="Ton positionnement unique" rows={2} className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono resize-y" />
                         </div>
                         <div>
                           <label className="block text-[10px] font-bold text-text-dim uppercase tracking-wider mb-1">Style</label>
-                          <textarea
-                            value={newProfile.style}
-                            onChange={(e) => setNewProfile({ ...newProfile, style: e.target.value })}
-                            placeholder="Ton ton, énergie, format"
-                            rows={2}
-                            className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono resize-y"
-                          />
+                          <textarea value={newProfile.style} onChange={(e) => setNewProfile({ ...newProfile, style: e.target.value })} placeholder="Ton ton, énergie, format" rows={2} className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono resize-y" />
                         </div>
                       </div>
                       <div>
                         <label className="block text-[10px] font-bold text-text-dim uppercase tracking-wider mb-1">Infos supplémentaires</label>
-                        <textarea
-                          value={newProfile.extra}
-                          onChange={(e) => setNewProfile({ ...newProfile, extra: e.target.value })}
-                          placeholder="Produit, valeurs, CTA spécifique..."
-                          rows={2}
-                          className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono resize-y"
-                        />
+                        <textarea value={newProfile.extra} onChange={(e) => setNewProfile({ ...newProfile, extra: e.target.value })} placeholder="Produit, valeurs, CTA spécifique..." rows={2} className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono resize-y" />
                       </div>
                     </div>
                     <div className="flex gap-3 mt-4">

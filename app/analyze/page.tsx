@@ -13,7 +13,7 @@ const fadeUp = {
 
 export default function AnalyzePage() {
   const router = useRouter()
-  const { videoInfo, analysis, youtubeUrl, user } = useStore()
+  const { videoInfo, analysis, youtubeUrl, user, setSavedAnalysisId } = useStore()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const savedRef = useRef(false)
 
@@ -41,9 +41,16 @@ export default function AnalyzePage() {
           videoInfo,
           analysis,
         }),
-      }).catch(console.error)
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.analysis?.id) {
+            setSavedAnalysisId(data.analysis.id)
+          }
+        })
+        .catch(console.error)
     }
-  }, [isAuthenticated, user, analysis, youtubeUrl, videoInfo])
+  }, [isAuthenticated, user, analysis, youtubeUrl, videoInfo, setSavedAnalysisId])
 
   if (!analysis || !videoInfo) return null
 

@@ -68,6 +68,7 @@ interface AppState {
   analysis: Analysis | null
   nicheData: NicheData | null
   script: string | null
+  savedAnalysisId: string | null
   isLoading: boolean
   loadingMessage: string
   user: UserData | null
@@ -77,6 +78,7 @@ interface AppState {
   setAnalysis: (analysis: Analysis) => void
   setNicheData: (data: NicheData) => void
   setScript: (script: string) => void
+  setSavedAnalysisId: (id: string | null) => void
   setLoading: (loading: boolean, message?: string) => void
   setUser: (user: UserData | null) => void
   updateCredits: (credits: number) => void
@@ -90,6 +92,7 @@ export const useStore = create<AppState>((set) => ({
   analysis: null,
   nicheData: null,
   script: null,
+  savedAnalysisId: null,
   isLoading: false,
   loadingMessage: '',
   user: loadUser(),
@@ -99,6 +102,7 @@ export const useStore = create<AppState>((set) => ({
   setAnalysis: (analysis) => set({ analysis }),
   setNicheData: (data) => set({ nicheData: data }),
   setScript: (script) => set({ script }),
+  setSavedAnalysisId: (id) => set({ savedAnalysisId: id }),
   setLoading: (loading, message = '') => set({ isLoading: loading, loadingMessage: message }),
   setUser: (user) => {
     persistUser(user)
@@ -120,6 +124,7 @@ export const useStore = create<AppState>((set) => ({
     analysis: null,
     nicheData: null,
     script: null,
+    savedAnalysisId: null,
     isLoading: false,
     loadingMessage: '',
   }),

@@ -7,7 +7,7 @@ import { useStore } from '@/store/useStore'
 
 export default function ScriptPage() {
   const router = useRouter()
-  const { script, analysis, nicheData, user, reset } = useStore()
+  const { script, analysis, nicheData, user, savedAnalysisId, reset } = useStore()
   const [copied, setCopied] = useState(false)
   const savedRef = useRef(false)
 
@@ -24,13 +24,14 @@ export default function ScriptPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user.id,
+          analysisId: savedAnalysisId || null,
           scriptContent: script,
           niche: nicheData?.niche || null,
           icp: nicheData?.icp || null,
         }),
       }).catch(console.error)
     }
-  }, [script, user, nicheData])
+  }, [script, user, nicheData, savedAnalysisId])
 
   if (!script) return null
 
