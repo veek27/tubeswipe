@@ -74,9 +74,9 @@ export default function Home() {
       {/* Top nav bar — fixed */}
       <div className="fixed top-0 left-0 right-0 z-50 px-5 py-4">
         <div className="max-w-[900px] mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs text-text-muted font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-            TubeSwipe
+          <div className="flex items-center gap-2">
+            <img src="/logo.png" alt="TubeSwipe" className="w-6 h-6 rounded-md" />
+            <span className="font-display font-bold text-sm text-white tracking-tight">tubeswipe</span>
           </div>
 
           {user ? (
