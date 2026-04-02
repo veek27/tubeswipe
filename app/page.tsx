@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { useStore } from '@/store/useStore'
+import LandingSteps from '@/components/LandingSteps'
 
 export default function Home() {
   const [url, setUrl] = useState('')
@@ -63,7 +64,7 @@ export default function Home() {
   const [showRegisterModal, setShowRegisterModal] = useState(false)
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-5">
+    <div className="min-h-screen flex flex-col items-center px-5">
       {/* Background glow */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent/5 rounded-full blur-[120px]" />
@@ -132,7 +133,7 @@ export default function Home() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="relative z-10 w-full max-w-[640px] text-center"
+        className="relative z-10 w-full max-w-[640px] text-center min-h-screen flex flex-col items-center justify-center"
       >
         {/* Spacer for fixed nav */}
         <div className="mb-8" />
@@ -228,42 +229,17 @@ export default function Home() {
           </motion.div>
         )}
 
-        {/* 3 steps */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="mt-14 grid grid-cols-1 sm:grid-cols-3 gap-6 text-left"
-        >
-          <div className="flex gap-3">
-            <span className="flex-shrink-0 w-7 h-7 rounded-full bg-accent/15 text-accent text-xs font-bold flex items-center justify-center">1</span>
-            <div>
-              <p className="text-text-primary text-sm font-semibold mb-0.5">Colle le lien</p>
-              <p className="text-text-dim text-xs leading-relaxed">La vidéo que tu veux swiper, juste au-dessus.</p>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <span className="flex-shrink-0 w-7 h-7 rounded-full bg-accent/15 text-accent text-xs font-bold flex items-center justify-center">2</span>
-            <div>
-              <p className="text-text-primary text-sm font-semibold mb-0.5">Décris ta niche</p>
-              <p className="text-text-dim text-xs leading-relaxed">Ton audience, ton positionnement, ton style — on adapte tout.</p>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <span className="flex-shrink-0 w-7 h-7 rounded-full bg-accent/15 text-accent text-xs font-bold flex items-center justify-center">3</span>
-            <div>
-              <p className="text-text-primary text-sm font-semibold mb-0.5">Script prêt</p>
-              <p className="text-text-dim text-xs leading-relaxed">Plus qu&apos;à allumer la caméra et tourner ta vidéo.</p>
-            </div>
-          </div>
-        </motion.div>
-
         {/* Footer hint */}
         <p className="text-text-dim text-xs mt-10">
           Fonctionne avec n&apos;importe quelle vidéo YouTube publique
         </p>
 
       </motion.div>
+
+      {/* Animated Steps */}
+      <div className="relative z-10 w-full max-w-[800px] pb-20">
+        <LandingSteps />
+      </div>
 
       {/* Login Modal */}
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
