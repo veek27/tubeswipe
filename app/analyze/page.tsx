@@ -73,7 +73,7 @@ export default function AnalyzePage() {
       {/* Email Gate */}
       {!isAuthenticated && <EmailGate onAuthenticated={handleAuthenticated} />}
 
-      <div className={`max-w-page mx-auto transition-all duration-500 ${!isAuthenticated ? 'blur-md pointer-events-none select-none' : ''}`}>
+      <div className={`max-w-page mx-auto transition-all duration-500 ${!isAuthenticated ? 'blur-sm pointer-events-none select-none' : ''}`}>
         {/* Header */}
         <motion.div {...fadeUp} transition={{ duration: 0.4 }} className="mb-8">
           <button

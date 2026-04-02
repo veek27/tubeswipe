@@ -31,19 +31,7 @@ interface Profile {
   channelInfo?: ChannelInfo | null
 }
 
-const STORAGE_KEY = 'tubeswipe-profiles'
-
-function loadProfiles(): Profile[] {
-  if (typeof window === 'undefined') return []
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) : []
-  } catch { return [] }
-}
-
-function saveProfiles(profiles: Profile[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles))
-}
+// Profiles are now loaded exclusively from Supabase via API
 
 export default function NichePage() {
   const router = useRouter()
@@ -73,9 +61,31 @@ export default function NichePage() {
     if (!analysis) router.replace('/')
   }, [analysis, router])
 
+  // Load profiles from Supabase
   useEffect(() => {
-    setProfiles(loadProfiles())
-  }, [])
+    if (!user) return
+    fetch('/api/dashboard', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user.id }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        const dbProfiles = (data.profiles || []).map((p: Record<string, unknown>) => ({
+          id: p.id as string,
+          name: p.name as string,
+          niche: (p.niche as string) || '',
+          icp: (p.icp as string) || '',
+          angle: (p.angle as string) || '',
+          style: (p.style as string) || '',
+          extra: (p.extra as string) || '',
+          channelUrl: (p.channel_url as string) || '',
+          channelInfo: p.channel_info as ChannelInfo | null,
+        }))
+        setProfiles(dbProfiles)
+      })
+      .catch(console.error)
+  }, [user])
 
   const selectProfile = useCallback((profile: Profile) => {
     setNiche(profile.niche)
@@ -119,57 +129,61 @@ export default function NichePage() {
   const handleSaveProfile = async () => {
     if (!profileName.trim()) return
     if (!niche.trim() && !icp.trim()) return
+    if (!user) return
 
-    const newProfile: Profile = {
-      id: Date.now().toString(),
-      name: profileName.trim(),
-      niche: niche.trim(),
-      icp: icp.trim(),
-      angle: angle.trim(),
-      style: style.trim(),
-      extra: extra.trim(),
-      channelUrl: channelUrl.trim(),
-      channelInfo,
+    try {
+      const res = await fetch('/api/profiles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          name: profileName.trim(),
+          niche: niche.trim(),
+          icp: icp.trim(),
+          angle: angle.trim(),
+          style: style.trim(),
+          extra: extra.trim(),
+          channelUrl: channelUrl.trim(),
+          channelInfo,
+        }),
+      })
+      const data = await res.json()
+      if (data.profile) {
+        const saved: Profile = {
+          id: data.profile.id,
+          name: data.profile.name,
+          niche: data.profile.niche || '',
+          icp: data.profile.icp || '',
+          angle: data.profile.angle || '',
+          style: data.profile.style || '',
+          extra: data.profile.extra || '',
+          channelUrl: data.profile.channel_url || '',
+          channelInfo: data.profile.channel_info || null,
+        }
+        setProfiles([...profiles, saved])
+        setActiveProfileId(saved.id)
+      }
+    } catch (e) {
+      console.error('Error saving profile:', e)
     }
 
-    const updated = [...profiles, newProfile]
-    setProfiles(updated)
-    saveProfiles(updated)
-    setActiveProfileId(newProfile.id)
     setShowSaveModal(false)
     setProfileName('')
-
-    // Also save to Supabase if user is logged in
-    const userRaw = typeof window !== 'undefined' ? localStorage.getItem('tubeswipe-user') : null
-    if (userRaw) {
-      try {
-        const userData = JSON.parse(userRaw)
-        await fetch('/api/profiles', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: userData.id,
-            name: profileName.trim(),
-            niche: niche.trim(),
-            icp: icp.trim(),
-            angle: angle.trim(),
-            style: style.trim(),
-            extra: extra.trim(),
-            channelUrl: channelUrl.trim(),
-            channelInfo,
-          }),
-        })
-      } catch (e) {
-        console.error('Error saving profile to Supabase:', e)
-      }
-    }
   }
 
-  const handleDeleteProfile = (id: string) => {
-    const updated = profiles.filter(p => p.id !== id)
-    setProfiles(updated)
-    saveProfiles(updated)
-    if (activeProfileId === id) setActiveProfileId(null)
+  const handleDeleteProfile = async (id: string) => {
+    if (!user) return
+    try {
+      await fetch('/api/profiles', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileId: id, userId: user.id }),
+      })
+      setProfiles(profiles.filter(p => p.id !== id))
+      if (activeProfileId === id) setActiveProfileId(null)
+    } catch (e) {
+      console.error('Error deleting profile:', e)
+    }
     setShowDeleteConfirm(null)
   }
 

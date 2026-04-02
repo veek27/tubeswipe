@@ -52,6 +52,10 @@ export default function DashboardPage() {
   const [showNewProfile, setShowNewProfile] = useState(false)
   const [newProfile, setNewProfile] = useState({ name: '', niche: '', icp: '', angle: '', style: '', extra: '' })
   const [savingProfile, setSavingProfile] = useState(false)
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [passwordForm, setPasswordForm] = useState({ current: '', newPw: '', confirm: '' })
+  const [passwordLoading, setPasswordLoading] = useState(false)
+  const [passwordMsg, setPasswordMsg] = useState<{ type: 'error' | 'success'; text: string } | null>(null)
 
   useEffect(() => {
     if (!user) {
@@ -142,6 +146,40 @@ export default function DashboardPage() {
     router.push('/')
   }
 
+  const handleChangePassword = async () => {
+    setPasswordMsg(null)
+    if (!passwordForm.current) { setPasswordMsg({ type: 'error', text: 'Entre ton mot de passe actuel' }); return }
+    if (passwordForm.newPw.length < 6) { setPasswordMsg({ type: 'error', text: 'Le nouveau mot de passe doit contenir au moins 6 caractères' }); return }
+    if (passwordForm.newPw !== passwordForm.confirm) { setPasswordMsg({ type: 'error', text: 'Les mots de passe ne correspondent pas' }); return }
+
+    setPasswordLoading(true)
+    try {
+      const res = await fetch('/api/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user!.id,
+          currentPassword: passwordForm.current,
+          newPassword: passwordForm.newPw,
+        }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || 'Erreur')
+      }
+      setPasswordMsg({ type: 'success', text: 'Mot de passe modifié avec succès' })
+      setTimeout(() => {
+        setShowPasswordModal(false)
+        setPasswordForm({ current: '', newPw: '', confirm: '' })
+        setPasswordMsg(null)
+      }, 1500)
+    } catch (e: unknown) {
+      setPasswordMsg({ type: 'error', text: e instanceof Error ? e.message : 'Erreur' })
+    } finally {
+      setPasswordLoading(false)
+    }
+  }
+
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr)
     return d.toLocaleDateString('fr-FR', {
@@ -229,8 +267,19 @@ export default function DashboardPage() {
                 Nouvelle analyse
               </button>
               <button
+                onClick={() => setShowPasswordModal(true)}
+                className="px-3 py-2.5 rounded-xl border border-border text-text-dim hover:text-text-muted hover:border-accent/30 text-xs transition-all"
+                title="Modifier le mot de passe"
+              >
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.204-.107-.397.165-.71.505-.78.929l-.15.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.506-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </button>
+              <button
                 onClick={handleLogout}
                 className="px-3 py-2.5 rounded-xl border border-border text-text-dim hover:text-red-400 hover:border-red-400/30 text-xs transition-all"
+                title="Se déconnecter"
               >
                 <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -619,6 +668,87 @@ export default function DashboardPage() {
           </AnimatePresence>
         )}
       </div>
+
+      {/* Password change modal */}
+      <AnimatePresence>
+        {showPasswordModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center px-5 bg-black/70 backdrop-blur-md"
+            onClick={() => { setShowPasswordModal(false); setPasswordMsg(null); setPasswordForm({ current: '', newPw: '', confirm: '' }) }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.3 }}
+              className="bg-surface border border-border rounded-2xl p-6 w-full max-w-sm shadow-2xl shadow-black/50"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="font-display text-lg font-bold mb-1">Modifier le mot de passe</h3>
+              <p className="text-text-dim text-xs mb-5">Change ton mot de passe de connexion.</p>
+
+              <div className="space-y-3">
+                <input
+                  type="password"
+                  value={passwordForm.current}
+                  onChange={(e) => { setPasswordForm({ ...passwordForm, current: e.target.value }); setPasswordMsg(null) }}
+                  placeholder="Mot de passe actuel"
+                  className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-dim transition-all focus:border-accent/50 focus:outline-none"
+                  autoFocus
+                />
+                <input
+                  type="password"
+                  value={passwordForm.newPw}
+                  onChange={(e) => { setPasswordForm({ ...passwordForm, newPw: e.target.value }); setPasswordMsg(null) }}
+                  placeholder="Nouveau mot de passe (6 car. min.)"
+                  className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-dim transition-all focus:border-accent/50 focus:outline-none"
+                />
+                <input
+                  type="password"
+                  value={passwordForm.confirm}
+                  onChange={(e) => { setPasswordForm({ ...passwordForm, confirm: e.target.value }); setPasswordMsg(null) }}
+                  placeholder="Confirmer le nouveau mot de passe"
+                  className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-dim transition-all focus:border-accent/50 focus:outline-none"
+                />
+              </div>
+
+              {passwordMsg && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className={`text-xs mt-3 font-mono ${passwordMsg.type === 'error' ? 'text-red-400' : 'text-emerald-400'}`}
+                >
+                  {passwordMsg.text}
+                </motion.p>
+              )}
+
+              <div className="flex gap-3 mt-5">
+                <button
+                  onClick={() => { setShowPasswordModal(false); setPasswordMsg(null); setPasswordForm({ current: '', newPw: '', confirm: '' }) }}
+                  className="px-4 py-2.5 rounded-xl border border-border text-text-muted hover:text-text-primary text-sm font-medium transition-all"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleChangePassword}
+                  disabled={passwordLoading}
+                  className="flex-1 bg-accent hover:bg-accent-hover text-white font-semibold px-4 py-2.5 rounded-xl text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {passwordLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Modification...
+                    </>
+                  ) : 'Modifier'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
