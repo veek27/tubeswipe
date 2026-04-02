@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { useStore } from '@/store/useStore'
 import LandingSteps from '@/components/LandingSteps'
+import LandingWhy from '@/components/LandingWhy'
 
 export default function Home() {
   const [url, setUrl] = useState('')
@@ -232,8 +233,13 @@ export default function Home() {
       </motion.div>
 
       {/* Animated Steps */}
-      <div className="relative z-10 w-full max-w-[900px] pb-20">
+      <div className="relative z-10 w-full max-w-[900px]">
         <LandingSteps />
+      </div>
+
+      {/* Why section */}
+      <div className="relative z-10 w-full max-w-[900px]">
+        <LandingWhy />
       </div>
 
       {/* Login Modal */}
