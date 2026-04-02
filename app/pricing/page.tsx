@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { useStore } from '@/store/useStore'
+import AppNav from '@/components/AppNav'
 
 const plans = [
   {
@@ -12,9 +13,10 @@ const plans = [
     period: '',
     credits: 1,
     features: [
-      '1 crédit offert',
-      'Analyse complète',
-      '1 script personnalisé',
+      { text: '1 analyse complète offerte', highlight: true },
+      { text: '1 script personnalisé offert', highlight: true },
+      { text: 'Décryptage sujet, angle & structure', highlight: false },
+      { text: 'Tendances & opportunités', highlight: false },
     ],
     cta: null,
     popular: false,
@@ -26,11 +28,12 @@ const plans = [
     period: '/mois',
     credits: 10,
     features: [
-      '10 crédits par mois',
-      'Analyse complète des vidéos',
-      'Scripts personnalisés',
-      'Profils sauvegardés',
-      'Historique complet',
+      { text: '10 crédits par mois', highlight: true },
+      { text: 'Analyses illimitées (1 crédit chacune)', highlight: false },
+      { text: 'Scripts adaptés à ta niche & ton ICP', highlight: false },
+      { text: 'Connecte ta chaîne YouTube', highlight: false },
+      { text: 'Profils & historique sauvegardés', highlight: false },
+      { text: 'Détection des outliers & tendances', highlight: false },
     ],
     cta: 'Passer à Starter',
     popular: false,
@@ -42,12 +45,13 @@ const plans = [
     period: '/mois',
     credits: 35,
     features: [
-      '35 crédits par mois',
-      'Analyse complète des vidéos',
-      'Scripts personnalisés',
-      'Profils sauvegardés',
-      'Historique complet',
-      'Support prioritaire',
+      { text: '35 crédits par mois', highlight: true },
+      { text: 'Tout le plan Starter inclus', highlight: false },
+      { text: 'Scripts enrichis par ta chaîne YouTube', highlight: true },
+      { text: 'Profils multiples (plusieurs niches)', highlight: false },
+      { text: 'Historique complet des analyses', highlight: false },
+      { text: 'Accès prioritaire aux nouvelles features', highlight: false },
+      { text: 'Support prioritaire', highlight: false },
     ],
     cta: 'Passer à Pro',
     popular: true,
@@ -77,7 +81,8 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen px-5 py-10">
-      <div className="max-w-[900px] mx-auto">
+      <AppNav />
+      <div className="max-w-[960px] mx-auto pt-12">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -99,12 +104,12 @@ export default function PricingPage() {
             <div className="flex items-center justify-center gap-3 mb-3">
               <div className="h-6 w-1 bg-accent rounded-full" />
               <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight">
-                Continue à créer des scripts
+                Passe au niveau supérieur
               </h1>
               <div className="h-6 w-1 bg-accent rounded-full" />
             </div>
-            <p className="text-text-muted text-sm max-w-md mx-auto">
-              Choisis le forfait qui correspond à ton rythme de publication.
+            <p className="text-text-muted text-sm max-w-lg mx-auto">
+              Analyse des vidéos virales, génère des scripts adaptés à ta niche, et publie plus vite que ta concurrence.
             </p>
           </div>
         </motion.div>
@@ -145,7 +150,7 @@ export default function PricingPage() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.1 + i * 0.08 }}
-                className={`relative bg-surface rounded-2xl p-6 transition-all ${
+                className={`relative bg-surface rounded-2xl p-6 flex flex-col transition-all ${
                   isCurrentPlan
                     ? 'border-2 border-accent shadow-lg shadow-accent/10'
                     : isPro
@@ -183,18 +188,19 @@ export default function PricingPage() {
                   <p className="text-text-muted text-xs mt-1">{plan.credits} crédit{plan.credits > 1 ? 's' : ''}{plan.period ? '/mois' : ' offert'}</p>
                 </div>
 
-                <div className="space-y-2.5 mb-6">
+                {/* Features — flex-1 so button stays at bottom */}
+                <div className="space-y-2.5 mb-6 flex-1">
                   {plan.features.map((feature, j) => (
-                    <div key={j} className="flex items-center gap-2 text-sm">
-                      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke={isCurrentPlan ? '#E40000' : isPro ? '#E40000' : '#555'} strokeWidth="2.5">
+                    <div key={j} className="flex items-start gap-2 text-sm">
+                      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke={feature.highlight || isCurrentPlan || isPro ? '#E40000' : '#555'} strokeWidth="2.5" className="flex-shrink-0 mt-0.5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
-                      <span className={isCurrentPlan ? 'text-text-primary' : 'text-text-muted'}>{feature}</span>
+                      <span className={feature.highlight ? 'text-text-primary font-medium' : 'text-text-muted'}>{feature.text}</span>
                     </div>
                   ))}
                 </div>
 
-                {/* Button */}
+                {/* Button — always at bottom thanks to flex */}
                 {plan.cta ? (
                   isCurrentPlan ? (
                     <div className="w-full py-3 rounded-xl text-sm font-semibold text-center bg-accent/10 text-accent border border-accent/20">
@@ -228,17 +234,17 @@ export default function PricingPage() {
           })}
         </div>
 
-        {/* FAQ-ish */}
+        {/* Bottom info */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4, delay: 0.4 }}
           className="mt-10 text-center"
         >
-          <p className="text-text-dim text-xs">
-            1 crédit = 1 analyse complète + 1 script personnalisé.
+          <p className="text-text-dim text-xs leading-relaxed">
+            1 crédit = 1 analyse complète + 1 script personnalisé adapté à ta niche.
             <br />
-            Les crédits se renouvellent chaque mois. Annulable à tout moment.
+            Les crédits se renouvellent chaque mois. Annulable à tout moment. Sans engagement.
           </p>
         </motion.div>
       </div>
