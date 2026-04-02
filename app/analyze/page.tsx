@@ -3,7 +3,8 @@
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { useStore } from '@/store/useStore'
-import { useEffect } from 'react'
+import { useEffect, useState, useRef } from 'react'
+import EmailGate from '@/components/EmailGate'
 
 const fadeUp = {
   initial: { opacity: 0, y: 16 },
@@ -12,13 +13,45 @@ const fadeUp = {
 
 export default function AnalyzePage() {
   const router = useRouter()
-  const { videoInfo, analysis } = useStore()
+  const { videoInfo, analysis, youtubeUrl, user } = useStore()
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const savedRef = useRef(false)
 
   useEffect(() => {
     if (!analysis) router.replace('/')
   }, [analysis, router])
 
+  // Check if user is already logged in
+  useEffect(() => {
+    if (user) {
+      setIsAuthenticated(true)
+    }
+  }, [user])
+
+  // Save analysis to Supabase when authenticated
+  useEffect(() => {
+    if (isAuthenticated && user && analysis && !savedRef.current) {
+      savedRef.current = true
+      fetch('/api/save-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          youtubeUrl,
+          videoInfo,
+          analysis,
+        }),
+      }).catch(console.error)
+    }
+  }, [isAuthenticated, user, analysis, youtubeUrl, videoInfo])
+
   if (!analysis || !videoInfo) return null
+
+  const handleAuthenticated = (userId: string) => {
+    setIsAuthenticated(true)
+    // Analysis will be saved via the useEffect above
+    void userId
+  }
 
   const trendColors = {
     HOT: { bg: 'bg-red-500/10', border: 'border-red-500/30', text: 'text-red-400', label: 'HOT' },
@@ -30,7 +63,10 @@ export default function AnalyzePage() {
 
   return (
     <div className="min-h-screen px-5 py-10">
-      <div className="max-w-page mx-auto">
+      {/* Email Gate */}
+      {!isAuthenticated && <EmailGate onAuthenticated={handleAuthenticated} />}
+
+      <div className={`max-w-page mx-auto transition-all duration-500 ${!isAuthenticated ? 'blur-md pointer-events-none select-none' : ''}`}>
         {/* Header */}
         <motion.div {...fadeUp} transition={{ duration: 0.4 }} className="mb-8">
           <button

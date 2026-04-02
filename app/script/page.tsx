@@ -1,18 +1,36 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useStore } from '@/store/useStore'
 
 export default function ScriptPage() {
   const router = useRouter()
-  const { script, analysis, reset } = useStore()
+  const { script, analysis, nicheData, user, reset } = useStore()
   const [copied, setCopied] = useState(false)
+  const savedRef = useRef(false)
 
   useEffect(() => {
     if (!script) router.replace('/')
   }, [script, router])
+
+  // Save script to Supabase
+  useEffect(() => {
+    if (script && user && !savedRef.current) {
+      savedRef.current = true
+      fetch('/api/save-script', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          scriptContent: script,
+          niche: nicheData?.niche || null,
+          icp: nicheData?.icp || null,
+        }),
+      }).catch(console.error)
+    }
+  }, [script, user, nicheData])
 
   if (!script) return null
 

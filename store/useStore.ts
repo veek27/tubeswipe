@@ -36,6 +36,32 @@ interface NicheData {
   extra: string
 }
 
+export interface UserData {
+  id: string
+  first_name: string
+  email: string
+  credits: number
+  plan: string
+  isAdmin: boolean
+}
+
+function loadUser(): UserData | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem('tubeswipe-user')
+    return raw ? JSON.parse(raw) : null
+  } catch { return null }
+}
+
+function persistUser(user: UserData | null) {
+  if (typeof window === 'undefined') return
+  if (user) {
+    localStorage.setItem('tubeswipe-user', JSON.stringify(user))
+  } else {
+    localStorage.removeItem('tubeswipe-user')
+  }
+}
+
 interface AppState {
   youtubeUrl: string
   videoInfo: VideoInfo | null
@@ -44,6 +70,7 @@ interface AppState {
   script: string | null
   isLoading: boolean
   loadingMessage: string
+  user: UserData | null
 
   setYoutubeUrl: (url: string) => void
   setVideoInfo: (info: VideoInfo) => void
@@ -51,6 +78,9 @@ interface AppState {
   setNicheData: (data: NicheData) => void
   setScript: (script: string) => void
   setLoading: (loading: boolean, message?: string) => void
+  setUser: (user: UserData | null) => void
+  updateCredits: (credits: number) => void
+  logout: () => void
   reset: () => void
 }
 
@@ -62,6 +92,7 @@ export const useStore = create<AppState>((set) => ({
   script: null,
   isLoading: false,
   loadingMessage: '',
+  user: loadUser(),
 
   setYoutubeUrl: (url) => set({ youtubeUrl: url }),
   setVideoInfo: (info) => set({ videoInfo: info }),
@@ -69,6 +100,20 @@ export const useStore = create<AppState>((set) => ({
   setNicheData: (data) => set({ nicheData: data }),
   setScript: (script) => set({ script }),
   setLoading: (loading, message = '') => set({ isLoading: loading, loadingMessage: message }),
+  setUser: (user) => {
+    persistUser(user)
+    set({ user })
+  },
+  updateCredits: (credits) => set((state) => {
+    if (!state.user) return {}
+    const updated = { ...state.user, credits }
+    persistUser(updated)
+    return { user: updated }
+  }),
+  logout: () => {
+    persistUser(null)
+    set({ user: null })
+  },
   reset: () => set({
     youtubeUrl: '',
     videoInfo: null,

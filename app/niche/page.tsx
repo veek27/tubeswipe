@@ -47,7 +47,8 @@ function saveProfiles(profiles: Profile[]) {
 
 export default function NichePage() {
   const router = useRouter()
-  const { analysis, setNicheData, setScript, setLoading: setStoreLoading } = useStore()
+  const { analysis, setNicheData, setScript, setLoading: setStoreLoading, user, updateCredits } = useStore()
+  const [showNoCredits, setShowNoCredits] = useState(false)
 
   const [niche, setNiche] = useState('')
   const [icp, setIcp] = useState('')
@@ -115,7 +116,7 @@ export default function NichePage() {
     }
   }
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     if (!profileName.trim()) return
     if (!niche.trim() && !icp.trim()) return
 
@@ -137,6 +138,31 @@ export default function NichePage() {
     setActiveProfileId(newProfile.id)
     setShowSaveModal(false)
     setProfileName('')
+
+    // Also save to Supabase if user is logged in
+    const userRaw = typeof window !== 'undefined' ? localStorage.getItem('tubeswipe-user') : null
+    if (userRaw) {
+      try {
+        const userData = JSON.parse(userRaw)
+        await fetch('/api/profiles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: userData.id,
+            name: profileName.trim(),
+            niche: niche.trim(),
+            icp: icp.trim(),
+            angle: angle.trim(),
+            style: style.trim(),
+            extra: extra.trim(),
+            channelUrl: channelUrl.trim(),
+            channelInfo,
+          }),
+        })
+      } catch (e) {
+        console.error('Error saving profile to Supabase:', e)
+      }
+    }
   }
 
   const handleDeleteProfile = (id: string) => {
@@ -153,6 +179,34 @@ export default function NichePage() {
     setError('')
     if (!niche.trim() || !icp.trim()) {
       setError('Renseigne au minimum ta niche et ton ICP.')
+      return
+    }
+
+    // Check credits
+    if (!user || user.credits <= 0) {
+      setShowNoCredits(true)
+      return
+    }
+
+    // Use a credit first
+    try {
+      const creditRes = await fetch('/api/use-credit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      })
+      if (!creditRes.ok) {
+        const creditData = await creditRes.json()
+        if (creditData.error === 'no_credits') {
+          setShowNoCredits(true)
+          return
+        }
+        throw new Error(creditData.message || 'Erreur crédits')
+      }
+      const creditData = await creditRes.json()
+      updateCredits(creditData.credits)
+    } catch {
+      setError('Erreur lors de la vérification des crédits.')
       return
     }
 
@@ -590,6 +644,52 @@ export default function NichePage() {
           </motion.div>
         )}
       </div>
+
+      {/* No Credits Modal */}
+      <AnimatePresence>
+        {showNoCredits && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center px-5 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowNoCredits(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-surface border border-border rounded-2xl p-8 w-full max-w-md shadow-2xl shadow-black/40 text-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto mb-5">
+                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#f59e0b" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+              </div>
+              <h3 className="font-display text-xl font-bold mb-2">Plus de crédits</h3>
+              <p className="text-text-muted text-sm mb-6">
+                Tu as utilisé ton crédit gratuit. Passe sur un forfait pour continuer à générer des scripts.
+              </p>
+              <button
+                onClick={() => router.push('/pricing')}
+                className="w-full bg-accent hover:bg-accent-hover text-white font-semibold px-6 py-3.5 rounded-xl text-sm transition-all flex items-center justify-center gap-2"
+              >
+                Voir les forfaits
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setShowNoCredits(false)}
+                className="mt-3 text-text-dim text-xs hover:text-text-muted transition-colors"
+              >
+                Fermer
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Save Profile Modal */}
       <AnimatePresence>
