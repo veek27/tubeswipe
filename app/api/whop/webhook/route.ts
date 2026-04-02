@@ -12,6 +12,30 @@ const PLAN_CREDITS: Record<string, { credits: number; plan: string }> = {
   pro: { credits: 35, plan: 'pro' },
 }
 
+function determinePlan(data: Record<string, unknown>): string {
+  const planId = data.plan_id || data.product_id || (data.plan as Record<string, unknown>)?.id
+  const whopStarterId = process.env.WHOP_STARTER_PLAN_ID
+  const whopProId = process.env.WHOP_PRO_PLAN_ID
+
+  if (planId === whopProId) return 'pro'
+  if (planId === whopStarterId) return 'starter'
+
+  // Fallback: try to determine from amount (in cents)
+  const amount = Number(data.amount || data.final_amount || 0)
+  if (amount >= 1500) return 'pro'
+  return 'starter'
+}
+
+function extractEmail(data: Record<string, unknown>): string | null {
+  return (
+    (data.email as string) ||
+    (data.customer_email as string) ||
+    ((data.user as Record<string, unknown>)?.email as string) ||
+    ((data.customer as Record<string, unknown>)?.email as string) ||
+    null
+  )
+}
+
 export async function POST(req: Request) {
   try {
     // Verify Whop webhook secret
@@ -19,42 +43,30 @@ export async function POST(req: Request) {
     const headerSecret = req.headers.get('x-whop-signature') || req.headers.get('authorization')
 
     if (whopSecret && headerSecret !== whopSecret && headerSecret !== `Bearer ${whopSecret}`) {
+      console.error('Whop webhook: invalid signature')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await req.json()
+    console.log('Whop webhook received:', JSON.stringify(body).substring(0, 500))
+
+    // Whop V1 sends: { event: "...", data: { ... } }
     const event = body.event || body.action
     const data = body.data || body
 
-    // Handle different Whop events
-    if (event === 'membership.went_valid' || event === 'payment.succeeded') {
-      const email = data.email || data.customer_email || data.user?.email
-      const planId = data.plan_id || data.product_id || data.plan?.id
-      const whopCustomerId = data.customer_id || data.user?.id
+    // ============================================
+    // MEMBERSHIP ACTIVATED — new subscription
+    // ============================================
+    if (event === 'membership_activated' || event === 'membership.went_valid') {
+      const email = extractEmail(data)
+      const whopUserId = (data.user_id as string) || ((data.user as Record<string, unknown>)?.id as string)
+      const planType = determinePlan(data)
+      const planConfig = PLAN_CREDITS[planType]
 
       if (!email) {
-        console.error('Whop webhook: no email found', body)
-        return NextResponse.json({ error: 'No email' }, { status: 400 })
+        console.error('Whop webhook membership_activated: no email found', JSON.stringify(data).substring(0, 300))
+        return NextResponse.json({ error: 'No email found' }, { status: 400 })
       }
-
-      // Determine plan from Whop product/plan ID
-      // Map your Whop product IDs here
-      let planType = 'starter'
-      const whopStarterId = process.env.WHOP_STARTER_PLAN_ID
-      const whopProId = process.env.WHOP_PRO_PLAN_ID
-
-      if (planId === whopProId) {
-        planType = 'pro'
-      } else if (planId === whopStarterId) {
-        planType = 'starter'
-      } else {
-        // Try to determine from amount
-        const amount = data.amount || data.final_amount || 0
-        if (amount >= 1500) planType = 'pro' // 17.90€ = 1790 cents
-        else planType = 'starter'
-      }
-
-      const planConfig = PLAN_CREDITS[planType]
 
       // Find user by email
       const { data: user } = await supabase
@@ -64,7 +76,7 @@ export async function POST(req: Request) {
         .single()
 
       if (!user) {
-        console.error('Whop webhook: user not found', email)
+        console.error('Whop webhook: user not found for email', email)
         return NextResponse.json({ error: 'User not found' }, { status: 404 })
       }
 
@@ -75,7 +87,7 @@ export async function POST(req: Request) {
         .update({
           credits: newCredits,
           plan: planConfig.plan,
-          whop_customer_id: whopCustomerId || user.whop_customer_id,
+          whop_customer_id: whopUserId || user.whop_customer_id,
         })
         .eq('id', user.id)
 
@@ -84,28 +96,78 @@ export async function POST(req: Request) {
         user_id: user.id,
         amount: planConfig.credits,
         type: 'purchase',
-        description: `Achat forfait ${planConfig.plan} (+${planConfig.credits} crédits)`,
+        description: `Activation forfait ${planConfig.plan} (+${planConfig.credits} crédits)`,
       })
 
-      console.log(`Whop: credited ${planConfig.credits} to ${email} (${planType})`)
+      console.log(`Whop: activated ${planType} for ${email}, +${planConfig.credits} crédits (total: ${newCredits})`)
       return NextResponse.json({ success: true, credits: newCredits })
     }
 
-    // Handle cancellation
-    if (event === 'membership.went_invalid' || event === 'membership.cancelled') {
-      const email = data.email || data.customer_email || data.user?.email
+    // ============================================
+    // INVOICE PAID — monthly renewal
+    // ============================================
+    if (event === 'invoice_paid' || event === 'payment.succeeded') {
+      const email = extractEmail(data)
+      const planType = determinePlan(data)
+      const planConfig = PLAN_CREDITS[planType]
+
+      if (!email) {
+        console.error('Whop webhook invoice_paid: no email found', JSON.stringify(data).substring(0, 300))
+        return NextResponse.json({ error: 'No email found' }, { status: 400 })
+      }
+
+      const { data: user } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email.toLowerCase())
+        .single()
+
+      if (!user) {
+        console.error('Whop webhook: user not found for email', email)
+        return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      }
+
+      // Reset credits to plan amount (monthly renewal = fresh credits)
+      await supabase
+        .from('users')
+        .update({
+          credits: planConfig.credits,
+          plan: planConfig.plan,
+        })
+        .eq('id', user.id)
+
+      // Log transaction
+      await supabase.from('credit_transactions').insert({
+        user_id: user.id,
+        amount: planConfig.credits,
+        type: 'renewal',
+        description: `Renouvellement forfait ${planConfig.plan} (${planConfig.credits} crédits)`,
+      })
+
+      console.log(`Whop: renewed ${planType} for ${email}, reset to ${planConfig.credits} crédits`)
+      return NextResponse.json({ success: true, credits: planConfig.credits })
+    }
+
+    // ============================================
+    // MEMBERSHIP DEACTIVATED — cancellation
+    // ============================================
+    if (event === 'membership_deactivated' || event === 'membership.went_invalid' || event === 'membership.cancelled') {
+      const email = extractEmail(data)
+
       if (email) {
         await supabase
           .from('users')
           .update({ plan: 'free' })
           .eq('email', email.toLowerCase())
 
-        console.log(`Whop: cancelled plan for ${email}`)
+        console.log(`Whop: deactivated plan for ${email}, back to free`)
       }
+
       return NextResponse.json({ success: true })
     }
 
     // Unknown event — just acknowledge
+    console.log('Whop webhook: unhandled event', event)
     return NextResponse.json({ received: true })
   } catch (e) {
     console.error('Whop webhook error:', e)
