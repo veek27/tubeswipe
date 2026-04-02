@@ -51,9 +51,16 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [expandedAnalysis, setExpandedAnalysis] = useState<string | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
-  const [showNewProfile, setShowNewProfile] = useState(false)
-  const [newProfile, setNewProfile] = useState({ name: '', niche: '', icp: '', angle: '', style: '', extra: '' })
+  const [showProfileForm, setShowProfileForm] = useState(false)
+  const [editingProfileId, setEditingProfileId] = useState<string | null>(null)
+  const [profileForm, setProfileForm] = useState({ name: '', niche: '', icp: '', angle: '', style: '', extra: '', channelUrl: '' })
+  const [profileChannelInfo, setProfileChannelInfo] = useState<{ id: string; name: string; description: string; thumbnail: string; subscribers?: string; totalViews?: string; videoCount?: number } | null>(null)
   const [savingProfile, setSavingProfile] = useState(false)
+  const [channelQuery, setChannelQuery] = useState('')
+  const [channelResults, setChannelResults] = useState<{ id: string; name: string; description: string; thumbnail: string }[]>([])
+  const [channelSearching, setChannelSearching] = useState(false)
+  const [channelLoading, setChannelLoading] = useState(false)
+  const [showChannelDropdown, setShowChannelDropdown] = useState(false)
   const [showPasswordModal, setShowPasswordModal] = useState(false)
   const [passwordForm, setPasswordForm] = useState({ current: '', newPw: '', confirm: '' })
   const [passwordLoading, setPasswordLoading] = useState(false)
@@ -106,31 +113,110 @@ export default function DashboardPage() {
     }
   }
 
-  const handleCreateProfile = async () => {
-    if (!user || !newProfile.name.trim()) return
-    setSavingProfile(true)
+  const resetProfileForm = () => {
+    setProfileForm({ name: '', niche: '', icp: '', angle: '', style: '', extra: '', channelUrl: '' })
+    setProfileChannelInfo(null)
+    setChannelQuery('')
+    setChannelResults([])
+    setShowChannelDropdown(false)
+    setEditingProfileId(null)
+    setShowProfileForm(false)
+  }
+
+  const openEditProfile = (p: ProfileRecord) => {
+    setProfileForm({
+      name: p.name,
+      niche: p.niche || '',
+      icp: p.icp || '',
+      angle: p.angle || '',
+      style: p.style || '',
+      extra: p.extra || '',
+      channelUrl: p.channel_url || '',
+    })
+    setProfileChannelInfo(p.channel_info as typeof profileChannelInfo)
+    setChannelQuery(p.channel_info ? (p.channel_info as { name?: string }).name || '' : '')
+    setEditingProfileId(p.id)
+    setShowProfileForm(true)
+  }
+
+  const handleChannelSearch = async (query: string) => {
+    setChannelQuery(query)
+    if (query.length < 2) {
+      setChannelResults([])
+      setShowChannelDropdown(false)
+      return
+    }
+    setChannelSearching(true)
+    setShowChannelDropdown(true)
     try {
-      const res = await fetch('/api/profiles', {
+      const res = await fetch('/api/channel-search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query }),
+      })
+      const data = await res.json()
+      setChannelResults(data.results || [])
+    } catch {
+      setChannelResults([])
+    } finally {
+      setChannelSearching(false)
+    }
+  }
+
+  const handleSelectChannel = async (channel: { id: string; name: string; thumbnail: string }) => {
+    setShowChannelDropdown(false)
+    setChannelQuery(channel.name)
+    setChannelLoading(true)
+    try {
+      const res = await fetch('/api/channel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ channelUrl: `https://www.youtube.com/channel/${channel.id}` }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setProfileChannelInfo(data)
+        setProfileForm(prev => ({ ...prev, channelUrl: `https://www.youtube.com/channel/${channel.id}` }))
+      }
+    } catch {
+      // ignore
+    } finally {
+      setChannelLoading(false)
+    }
+  }
+
+  const handleSaveProfile = async () => {
+    if (!user || !profileForm.name.trim()) return
+    setSavingProfile(true)
+    try {
+      const isEdit = !!editingProfileId
+      const res = await fetch('/api/profiles', {
+        method: isEdit ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          ...(isEdit ? { profileId: editingProfileId } : {}),
           userId: user.id,
-          name: newProfile.name.trim(),
-          niche: newProfile.niche.trim(),
-          icp: newProfile.icp.trim(),
-          angle: newProfile.angle.trim(),
-          style: newProfile.style.trim(),
-          extra: newProfile.extra.trim(),
+          name: profileForm.name.trim(),
+          niche: profileForm.niche.trim(),
+          icp: profileForm.icp.trim(),
+          angle: profileForm.angle.trim(),
+          style: profileForm.style.trim(),
+          extra: profileForm.extra.trim(),
+          channelUrl: profileForm.channelUrl.trim(),
+          channelInfo: profileChannelInfo,
         }),
       })
       const data = await res.json()
       if (data.profile) {
-        setProfiles([data.profile, ...profiles])
+        if (isEdit) {
+          setProfiles(profiles.map(p => p.id === editingProfileId ? data.profile : p))
+        } else {
+          setProfiles([data.profile, ...profiles])
+        }
       }
-      setShowNewProfile(false)
-      setNewProfile({ name: '', niche: '', icp: '', angle: '', style: '', extra: '' })
+      resetProfileForm()
     } catch (e) {
-      console.error('Create profile error:', e)
+      console.error('Save profile error:', e)
     } finally {
       setSavingProfile(false)
     }
@@ -553,59 +639,132 @@ export default function DashboardPage() {
                 exit={{ opacity: 0, y: -10 }}
                 className="space-y-3"
               >
-                {/* New profile button / form */}
-                {showNewProfile ? (
+                {/* Profile form (create or edit) */}
+                {showProfileForm ? (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-surface border border-accent/30 rounded-2xl p-5"
                   >
-                    <h3 className="font-display font-bold text-base mb-4">Nouveau profil</h3>
+                    <h3 className="font-display font-bold text-base mb-4">
+                      {editingProfileId ? 'Modifier le profil' : 'Nouveau profil'}
+                    </h3>
                     <div className="space-y-3">
                       <div>
                         <label className="block text-[10px] font-bold text-text-dim uppercase tracking-wider mb-1">Nom du profil <span className="text-accent">*</span></label>
                         <input
                           type="text"
-                          value={newProfile.name}
-                          onChange={(e) => setNewProfile({ ...newProfile, name: e.target.value })}
+                          value={profileForm.name}
+                          onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
                           placeholder="ex: Ma chaîne fitness"
                           className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono"
                           autoFocus
                         />
                       </div>
+
+                      {/* Channel YouTube search */}
+                      <div>
+                        <label className="block text-[10px] font-bold text-text-dim uppercase tracking-wider mb-1">Chaîne YouTube</label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={channelQuery}
+                            onChange={(e) => handleChannelSearch(e.target.value)}
+                            onFocus={() => channelResults.length > 0 && setShowChannelDropdown(true)}
+                            placeholder="@handle ou nom de la chaîne"
+                            className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono pr-10"
+                          />
+                          {channelSearching && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                              <div className="w-4 h-4 border-2 border-white/20 border-t-accent rounded-full animate-spin" />
+                            </div>
+                          )}
+                          {/* Dropdown results */}
+                          {showChannelDropdown && channelResults.length > 0 && (
+                            <div className="absolute left-0 right-0 top-full mt-1 bg-surface-2 border border-border rounded-xl overflow-hidden shadow-xl z-20 max-h-[240px] overflow-y-auto">
+                              {channelResults.map((ch) => (
+                                <button
+                                  key={ch.id}
+                                  onClick={() => handleSelectChannel(ch)}
+                                  className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/[0.04] transition-colors text-left"
+                                >
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img src={ch.thumbnail} alt={ch.name} className="w-8 h-8 rounded-full flex-shrink-0 object-cover" />
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-medium text-text-primary truncate">{ch.name}</p>
+                                    <p className="text-[10px] text-text-dim truncate">{ch.description}</p>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Channel preview card */}
+                        {channelLoading && (
+                          <div className="mt-2 flex items-center gap-2 text-text-dim text-xs">
+                            <div className="w-3 h-3 border-2 border-white/20 border-t-accent rounded-full animate-spin" />
+                            Chargement de la chaîne...
+                          </div>
+                        )}
+                        {profileChannelInfo && !channelLoading && (
+                          <div className="mt-2 flex items-center gap-3 bg-surface-2 border border-border rounded-xl p-3">
+                            {profileChannelInfo.thumbnail && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={profileChannelInfo.thumbnail} alt={profileChannelInfo.name} className="w-10 h-10 rounded-full flex-shrink-0 object-cover" />
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold text-text-primary truncate">{profileChannelInfo.name}</p>
+                              <div className="flex items-center gap-3 text-[10px] text-text-dim mt-0.5">
+                                {profileChannelInfo.subscribers && <span>{profileChannelInfo.subscribers} abonnés</span>}
+                                {profileChannelInfo.videoCount !== undefined && <span>{profileChannelInfo.videoCount} vidéos</span>}
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => { setProfileChannelInfo(null); setChannelQuery(''); setProfileForm(prev => ({ ...prev, channelUrl: '' })) }}
+                              className="text-text-dim hover:text-red-400 transition-colors flex-shrink-0"
+                            >
+                              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label className="block text-[10px] font-bold text-text-dim uppercase tracking-wider mb-1">Niche</label>
-                          <textarea value={newProfile.niche} onChange={(e) => setNewProfile({ ...newProfile, niche: e.target.value })} placeholder="De quoi parle ta chaîne ?" rows={2} className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono resize-y" />
+                          <textarea value={profileForm.niche} onChange={(e) => setProfileForm({ ...profileForm, niche: e.target.value })} placeholder="De quoi parle ta chaîne ?" rows={2} className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono resize-y" />
                         </div>
                         <div>
                           <label className="block text-[10px] font-bold text-text-dim uppercase tracking-wider mb-1">ICP (audience cible)</label>
-                          <textarea value={newProfile.icp} onChange={(e) => setNewProfile({ ...newProfile, icp: e.target.value })} placeholder="Qui regarde tes vidéos ?" rows={2} className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono resize-y" />
+                          <textarea value={profileForm.icp} onChange={(e) => setProfileForm({ ...profileForm, icp: e.target.value })} placeholder="Qui regarde tes vidéos ?" rows={2} className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono resize-y" />
                         </div>
                         <div>
                           <label className="block text-[10px] font-bold text-text-dim uppercase tracking-wider mb-1">Angle</label>
-                          <textarea value={newProfile.angle} onChange={(e) => setNewProfile({ ...newProfile, angle: e.target.value })} placeholder="Ton positionnement unique" rows={2} className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono resize-y" />
+                          <textarea value={profileForm.angle} onChange={(e) => setProfileForm({ ...profileForm, angle: e.target.value })} placeholder="Ton positionnement unique" rows={2} className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono resize-y" />
                         </div>
                         <div>
                           <label className="block text-[10px] font-bold text-text-dim uppercase tracking-wider mb-1">Style</label>
-                          <textarea value={newProfile.style} onChange={(e) => setNewProfile({ ...newProfile, style: e.target.value })} placeholder="Ton ton, énergie, format" rows={2} className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono resize-y" />
+                          <textarea value={profileForm.style} onChange={(e) => setProfileForm({ ...profileForm, style: e.target.value })} placeholder="Ton ton, énergie, format" rows={2} className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono resize-y" />
                         </div>
                       </div>
                       <div>
                         <label className="block text-[10px] font-bold text-text-dim uppercase tracking-wider mb-1">Infos supplémentaires</label>
-                        <textarea value={newProfile.extra} onChange={(e) => setNewProfile({ ...newProfile, extra: e.target.value })} placeholder="Produit, valeurs, CTA spécifique..." rows={2} className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono resize-y" />
+                        <textarea value={profileForm.extra} onChange={(e) => setProfileForm({ ...profileForm, extra: e.target.value })} placeholder="Produit, valeurs, CTA spécifique..." rows={2} className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono resize-y" />
                       </div>
                     </div>
                     <div className="flex gap-3 mt-4">
                       <button
-                        onClick={() => { setShowNewProfile(false); setNewProfile({ name: '', niche: '', icp: '', angle: '', style: '', extra: '' }) }}
+                        onClick={resetProfileForm}
                         className="px-4 py-2.5 rounded-xl border border-border text-text-muted hover:text-text-primary text-sm font-medium transition-all"
                       >
                         Annuler
                       </button>
                       <button
-                        onClick={handleCreateProfile}
-                        disabled={!newProfile.name.trim() || savingProfile}
+                        onClick={handleSaveProfile}
+                        disabled={!profileForm.name.trim() || savingProfile}
                         className="flex-1 bg-accent hover:bg-accent-hover text-white font-semibold px-4 py-2.5 rounded-xl text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                       >
                         {savingProfile ? (
@@ -613,13 +772,13 @@ export default function DashboardPage() {
                             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                             Sauvegarde...
                           </>
-                        ) : 'Créer le profil'}
+                        ) : editingProfileId ? 'Enregistrer' : 'Créer le profil'}
                       </button>
                     </div>
                   </motion.div>
                 ) : (
                   <button
-                    onClick={() => setShowNewProfile(true)}
+                    onClick={() => { resetProfileForm(); setShowProfileForm(true) }}
                     className="w-full bg-surface border border-dashed border-border rounded-2xl p-4 flex items-center justify-center gap-2 text-text-muted hover:text-accent hover:border-accent/30 text-sm font-medium transition-all"
                   >
                     <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -629,7 +788,7 @@ export default function DashboardPage() {
                   </button>
                 )}
 
-                {profiles.length === 0 && !showNewProfile ? (
+                {profiles.length === 0 && !showProfileForm ? (
                   <div className="bg-surface border border-border rounded-2xl p-12 text-center">
                     <p className="text-text-dim text-sm mb-3">Aucun profil sauvegardé</p>
                     <p className="text-text-dim text-xs">Clique sur &quot;Nouveau profil&quot; pour en créer un.</p>
@@ -644,15 +803,43 @@ export default function DashboardPage() {
                       className="bg-surface border border-border rounded-2xl p-5 hover:border-accent/20 transition-colors"
                     >
                       <div className="flex items-start justify-between mb-3">
-                        <h3 className="font-display font-bold text-base">{p.name}</h3>
-                        <button
-                          onClick={() => handleDeleteProfile(p.id)}
-                          className="text-text-dim hover:text-red-400 transition-colors"
-                        >
-                          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
+                        <div className="flex items-center gap-3 min-w-0">
+                          {/* Channel thumbnail if available */}
+                          {p.channel_info && (p.channel_info as { thumbnail?: string }).thumbnail && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={(p.channel_info as { thumbnail: string }).thumbnail}
+                              alt={p.name}
+                              className="w-9 h-9 rounded-full flex-shrink-0 object-cover"
+                            />
+                          )}
+                          <div className="min-w-0">
+                            <h3 className="font-display font-bold text-base truncate">{p.name}</h3>
+                            {p.channel_info && (p.channel_info as { name?: string }).name && (
+                              <p className="text-text-dim text-[10px] truncate">{(p.channel_info as { name: string }).name}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <button
+                            onClick={() => openEditProfile(p)}
+                            className="text-text-dim hover:text-accent transition-colors p-1"
+                            title="Modifier"
+                          >
+                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteProfile(p.id)}
+                            className="text-text-dim hover:text-red-400 transition-colors p-1"
+                            title="Supprimer"
+                          >
+                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         {p.niche && (

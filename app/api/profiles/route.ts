@@ -43,6 +43,44 @@ export async function POST(req: Request) {
   }
 }
 
+// Update a profile
+export async function PUT(req: Request) {
+  try {
+    const { profileId, userId, name, niche, icp, angle, style, extra, channelUrl, channelInfo } = await req.json()
+
+    if (!profileId || !userId || !name?.trim()) {
+      return NextResponse.json({ error: 'Données manquantes' }, { status: 400 })
+    }
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({
+        name: name.trim(),
+        niche: niche || null,
+        icp: icp || null,
+        angle: angle || null,
+        style: style || null,
+        extra: extra || null,
+        channel_url: channelUrl || null,
+        channel_info: channelInfo || null,
+      })
+      .eq('id', profileId)
+      .eq('user_id', userId)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Update profile error:', error)
+      return NextResponse.json({ error: 'Erreur mise à jour profil' }, { status: 500 })
+    }
+
+    return NextResponse.json({ profile: data })
+  } catch (e) {
+    console.error('Profile update error:', e)
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
+  }
+}
+
 // Delete a profile
 export async function DELETE(req: Request) {
   try {
