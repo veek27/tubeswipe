@@ -66,15 +66,15 @@ export default function PricingPage() {
   const handleChoosePlan = (planId: string) => {
     if (planId === 'free') return
     const whopUrls: Record<string, string> = {
-      starter: process.env.NEXT_PUBLIC_WHOP_STARTER_URL || '#',
-      pro: process.env.NEXT_PUBLIC_WHOP_PRO_URL || '#',
+      starter: 'https://whop.com/checkout/plan_38fiLKFvChNzB',
+      pro: 'https://whop.com/checkout/plan_4D93oz7tQtclG',
     }
     const url = whopUrls[planId]
-    if (url && url !== '#') {
-      const separator = url.includes('?') ? '&' : '?'
-      window.open(`${url}${separator}email=${encodeURIComponent(user?.email || '')}`, '_blank')
-    } else {
-      alert('Lien de paiement en cours de configuration. Reviens bientôt !')
+    if (url) {
+      const params = new URLSearchParams()
+      if (user?.email) params.set('email', user.email)
+      if (user?.id) params.set('metadata[user_id]', user.id)
+      window.open(`${url}?${params.toString()}`, '_blank')
     }
   }
 

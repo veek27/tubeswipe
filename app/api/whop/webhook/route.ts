@@ -36,6 +36,67 @@ function extractEmail(data: Record<string, unknown>): string | null {
   )
 }
 
+function extractMetadataUserId(data: Record<string, unknown>): string | null {
+  // Whop sends metadata from checkout URL
+  const metadata = data.metadata as Record<string, unknown> | undefined
+  if (metadata?.user_id) return metadata.user_id as string
+
+  // Also check nested checkout.metadata
+  const checkout = data.checkout as Record<string, unknown> | undefined
+  const checkoutMeta = checkout?.metadata as Record<string, unknown> | undefined
+  if (checkoutMeta?.user_id) return checkoutMeta.user_id as string
+
+  return null
+}
+
+// Find user: try by metadata user_id first, then by whop_customer_id, then by email
+async function findUser(data: Record<string, unknown>) {
+  // 1. Try metadata user_id (most reliable — passed from our checkout URL)
+  const metaUserId = extractMetadataUserId(data)
+  if (metaUserId) {
+    const { data: user } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', metaUserId)
+      .single()
+    if (user) {
+      console.log(`Whop: found user by metadata user_id: ${metaUserId}`)
+      return user
+    }
+  }
+
+  // 2. Try whop_customer_id (for renewals after first activation)
+  const whopUserId = (data.user_id as string) || ((data.user as Record<string, unknown>)?.id as string)
+  if (whopUserId) {
+    const { data: user } = await supabase
+      .from('users')
+      .select('*')
+      .eq('whop_customer_id', whopUserId)
+      .single()
+    if (user) {
+      console.log(`Whop: found user by whop_customer_id: ${whopUserId}`)
+      return user
+    }
+  }
+
+  // 3. Fallback: email
+  const email = extractEmail(data)
+  if (email) {
+    const { data: user } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email.toLowerCase())
+      .single()
+    if (user) {
+      console.log(`Whop: found user by email: ${email}`)
+      return user
+    }
+  }
+
+  console.error('Whop: could not find user. metadata_user_id:', metaUserId, 'whop_user_id:', whopUserId, 'email:', email)
+  return null
+}
+
 export async function POST(req: Request) {
   try {
     // Verify Whop webhook secret
@@ -58,25 +119,12 @@ export async function POST(req: Request) {
     // MEMBERSHIP ACTIVATED — new subscription
     // ============================================
     if (event === 'membership_activated' || event === 'membership.went_valid') {
-      const email = extractEmail(data)
       const whopUserId = (data.user_id as string) || ((data.user as Record<string, unknown>)?.id as string)
       const planType = determinePlan(data)
       const planConfig = PLAN_CREDITS[planType]
 
-      if (!email) {
-        console.error('Whop webhook membership_activated: no email found', JSON.stringify(data).substring(0, 300))
-        return NextResponse.json({ error: 'No email found' }, { status: 400 })
-      }
-
-      // Find user by email
-      const { data: user } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email', email.toLowerCase())
-        .single()
-
+      const user = await findUser(data)
       if (!user) {
-        console.error('Whop webhook: user not found for email', email)
         return NextResponse.json({ error: 'User not found' }, { status: 404 })
       }
 
@@ -99,7 +147,7 @@ export async function POST(req: Request) {
         description: `Activation forfait ${planConfig.plan} (+${planConfig.credits} crédits)`,
       })
 
-      console.log(`Whop: activated ${planType} for ${email}, +${planConfig.credits} crédits (total: ${newCredits})`)
+      console.log(`Whop: activated ${planType} for ${user.email}, +${planConfig.credits} crédits (total: ${newCredits})`)
       return NextResponse.json({ success: true, credits: newCredits })
     }
 
@@ -107,23 +155,11 @@ export async function POST(req: Request) {
     // INVOICE PAID — monthly renewal
     // ============================================
     if (event === 'invoice_paid' || event === 'payment.succeeded') {
-      const email = extractEmail(data)
       const planType = determinePlan(data)
       const planConfig = PLAN_CREDITS[planType]
 
-      if (!email) {
-        console.error('Whop webhook invoice_paid: no email found', JSON.stringify(data).substring(0, 300))
-        return NextResponse.json({ error: 'No email found' }, { status: 400 })
-      }
-
-      const { data: user } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email', email.toLowerCase())
-        .single()
-
+      const user = await findUser(data)
       if (!user) {
-        console.error('Whop webhook: user not found for email', email)
         return NextResponse.json({ error: 'User not found' }, { status: 404 })
       }
 
@@ -144,7 +180,7 @@ export async function POST(req: Request) {
         description: `Renouvellement forfait ${planConfig.plan} (${planConfig.credits} crédits)`,
       })
 
-      console.log(`Whop: renewed ${planType} for ${email}, reset to ${planConfig.credits} crédits`)
+      console.log(`Whop: renewed ${planType} for ${user.email}, reset to ${planConfig.credits} crédits`)
       return NextResponse.json({ success: true, credits: planConfig.credits })
     }
 
@@ -152,15 +188,15 @@ export async function POST(req: Request) {
     // MEMBERSHIP DEACTIVATED — cancellation
     // ============================================
     if (event === 'membership_deactivated' || event === 'membership.went_invalid' || event === 'membership.cancelled') {
-      const email = extractEmail(data)
+      const user = await findUser(data)
 
-      if (email) {
+      if (user) {
         await supabase
           .from('users')
           .update({ plan: 'free' })
-          .eq('email', email.toLowerCase())
+          .eq('id', user.id)
 
-        console.log(`Whop: deactivated plan for ${email}, back to free`)
+        console.log(`Whop: deactivated plan for ${user.email}, back to free`)
       }
 
       return NextResponse.json({ success: true })
