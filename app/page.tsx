@@ -138,20 +138,6 @@ export default function Home() {
         {/* Spacer for fixed nav */}
         <div className="mb-8" />
 
-        {/* Free offer badge */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="mb-5 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20"
-        >
-          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#E40000" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-          </svg>
-          <span className="text-accent text-xs font-bold">1 analyse + 1 script offerts</span>
-          <span className="text-text-dim text-[10px]">sans CB</span>
-        </motion.div>
-
         {/* Headline */}
         <h1 className="font-display text-3xl sm:text-4xl md:text-[2.75rem] font-extrabold tracking-tight leading-[1.15] mb-3">
           Arrête d&apos;inventer des sujets.
@@ -200,6 +186,11 @@ export default function Home() {
               )}
             </button>
           </div>
+          <p className="text-center text-[11px] text-text-dim mt-2 px-1">
+            <span className="text-accent font-semibold">1 analyse + 1 script offerts</span>
+            <span className="mx-1.5 text-white/10">|</span>
+            <span>CB non requise</span>
+          </p>
         </motion.div>
 
         {/* Error */}
