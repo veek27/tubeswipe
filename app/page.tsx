@@ -110,12 +110,20 @@ export default function Home() {
               </button>
             </div>
           ) : (
-            <button
-              onClick={() => setShowLoginModal(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface border border-border text-text-muted hover:text-text-primary hover:border-accent/30 text-xs font-medium transition-all"
-            >
-              Se connecter
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowLoginModal(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface border border-border text-text-muted hover:text-text-primary hover:border-accent/30 text-xs font-medium transition-all"
+              >
+                Se connecter
+              </button>
+              <button
+                onClick={() => setShowRegisterModal(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-accent hover:bg-accent-hover text-white text-xs font-semibold transition-all"
+              >
+                Créer un compte
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -255,22 +263,6 @@ export default function Home() {
           Fonctionne avec n&apos;importe quelle vidéo YouTube publique
         </p>
 
-        {/* Create account CTA */}
-        {!user && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            className="mt-6"
-          >
-            <button
-              onClick={() => setShowRegisterModal(true)}
-              className="text-accent hover:text-accent-hover text-xs font-semibold transition-colors underline underline-offset-4 decoration-accent/30 hover:decoration-accent/60"
-            >
-              Créer un compte gratuit
-            </button>
-          </motion.div>
-        )}
       </motion.div>
 
       {/* Login Modal */}
