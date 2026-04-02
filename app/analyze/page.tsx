@@ -79,13 +79,13 @@ export default function AnalyzePage() {
         {/* Header */}
         <motion.div {...fadeUp} transition={{ duration: 0.4 }} className="mb-8">
           <button
-            onClick={() => router.push('/')}
+            onClick={() => router.push(user ? '/dashboard' : '/')}
             className="text-text-muted hover:text-text-primary text-sm flex items-center gap-2 mb-6 transition-colors"
           >
             <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
-            Nouvelle analyse
+            {user ? 'Tableau de bord' : 'Nouvelle analyse'}
           </button>
 
           <div className="flex items-center gap-3 mb-2">

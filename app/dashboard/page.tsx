@@ -66,7 +66,54 @@ export default function DashboardPage() {
   const [passwordLoading, setPasswordLoading] = useState(false)
   const [passwordMsg, setPasswordMsg] = useState<{ type: 'error' | 'success'; text: string } | null>(null)
 
-  const { refreshUser } = useStore()
+  const { refreshUser, setLoading: setStoreLoading } = useStore()
+  const [analyzeUrl, setAnalyzeUrl] = useState('')
+  const [analyzeError, setAnalyzeError] = useState('')
+  const [analyzing, setAnalyzing] = useState(false)
+
+  const isValidYoutubeUrl = (u: string) => {
+    return /(?:youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9_-]{11}/.test(u)
+  }
+
+  const handleNewAnalysis = async () => {
+    setAnalyzeError('')
+    if (!analyzeUrl.trim() || !isValidYoutubeUrl(analyzeUrl.trim())) {
+      setAnalyzeError('Colle un lien YouTube valide.')
+      return
+    }
+
+    setAnalyzing(true)
+    setStoreLoading(true, 'Analyse de la vidéo en cours...')
+    setYoutubeUrl(analyzeUrl.trim())
+
+    try {
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ youtubeUrl: analyzeUrl.trim() }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        const errMsg = data.error || (res.status === 529 ? 'L\'IA est temporairement surchargée. Réessaie dans quelques secondes.' : `Erreur ${res.status}`)
+        throw new Error(errMsg)
+      }
+
+      const data = await res.json()
+      setVideoInfo(data.videoInfo)
+      setAnalysis(data.analysis)
+      setStoreLoading(false)
+      router.push('/analyze')
+    } catch (e: unknown) {
+      let message = e instanceof Error ? e.message : 'Erreur inconnue'
+      if (message.includes('overloaded') || message.includes('529')) {
+        message = 'L\'IA est temporairement surchargée. Réessaie dans 30 secondes.'
+      }
+      setAnalyzeError(message)
+      setAnalyzing(false)
+      setStoreLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (!user) {
@@ -352,15 +399,6 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => router.push('/')}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-white text-xs font-semibold transition-all"
-              >
-                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-                Nouvelle analyse
-              </button>
-              <button
                 onClick={() => setShowPasswordModal(true)}
                 className="px-3 py-2.5 rounded-xl border border-border text-text-dim hover:text-text-muted hover:border-accent/30 text-xs transition-all"
                 title="Modifier le mot de passe"
@@ -381,6 +419,50 @@ export default function DashboardPage() {
               </button>
             </div>
           </div>
+        </motion.div>
+
+        {/* New Analysis Form */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.03 }}
+          className="bg-surface border border-border rounded-2xl p-4 mb-6"
+        >
+          <p className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3 ml-1">Nouvelle analyse</p>
+          <div style={{ display: 'flex', flexDirection: 'row', gap: '8px' }}>
+            <input
+              type="text"
+              value={analyzeUrl}
+              onChange={(e) => { setAnalyzeUrl(e.target.value); setAnalyzeError('') }}
+              onKeyDown={(e) => e.key === 'Enter' && !analyzing && handleNewAnalysis()}
+              placeholder="Colle un lien YouTube ici..."
+              style={{ flex: '1 1 0%', minWidth: 0 }}
+              className="bg-surface-2 border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-dim font-mono transition-all"
+              disabled={analyzing}
+            />
+            <button
+              onClick={handleNewAnalysis}
+              disabled={analyzing}
+              className="bg-accent hover:bg-accent-hover text-white font-semibold px-5 py-3 rounded-xl text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0"
+            >
+              {analyzing ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Analyse...
+                </>
+              ) : (
+                <>
+                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  Analyser
+                </>
+              )}
+            </button>
+          </div>
+          {analyzeError && (
+            <p className="text-red-400 text-xs mt-2 ml-1">{analyzeError}</p>
+          )}
         </motion.div>
 
         {/* Credits Card */}
