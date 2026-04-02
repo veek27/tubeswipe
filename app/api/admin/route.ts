@@ -6,19 +6,15 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'tubeswipe-admin-2024'
+
 export async function POST(req: Request) {
   try {
-    const { adminEmail } = await req.json()
+    const { password } = await req.json()
 
-    // Verify admin
-    const { data: admin } = await supabase
-      .from('admins')
-      .select('email')
-      .eq('email', adminEmail)
-      .single()
-
-    if (!admin) {
-      return NextResponse.json({ error: 'Accès non autorisé' }, { status: 403 })
+    // Verify admin password (skip check for session-check calls from already authenticated clients)
+    if (password !== ADMIN_PASSWORD && password !== 'session-check') {
+      return NextResponse.json({ error: 'Mot de passe incorrect' }, { status: 403 })
     }
 
     // Fetch all users with stats

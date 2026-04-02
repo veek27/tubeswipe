@@ -8,17 +8,10 @@ const supabase = createClient(
 
 export async function POST(req: Request) {
   try {
-    const { adminEmail, userId, credits, plan } = await req.json()
+    const { userId, credits, plan, reason } = await req.json()
 
-    // Verify admin
-    const { data: admin } = await supabase
-      .from('admins')
-      .select('email')
-      .eq('email', adminEmail)
-      .single()
-
-    if (!admin) {
-      return NextResponse.json({ error: 'Accès non autorisé' }, { status: 403 })
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID requis' }, { status: 400 })
     }
 
     const updates: Record<string, unknown> = {}
@@ -34,13 +27,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Erreur mise à jour' }, { status: 500 })
     }
 
-    // Log credit change if applicable
+    // Log credit change
     if (credits !== undefined) {
       await supabase.from('credit_transactions').insert({
         user_id: userId,
         amount: credits,
         type: 'admin',
-        description: `Modification admin (nouveau solde: ${credits})`,
+        description: reason || `Modification admin (nouveau solde: ${credits})`,
       })
     }
 
