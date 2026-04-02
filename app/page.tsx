@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { motion, useAnimation } from 'framer-motion'
 import { useStore } from '@/store/useStore'
 import LandingSteps from '@/components/LandingSteps'
 import LandingWhy from '@/components/LandingWhy'
@@ -63,6 +63,32 @@ export default function Home() {
 
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [showRegisterModal, setShowRegisterModal] = useState(false)
+  const logoControls = useAnimation()
+  const [lastScrollY, setLastScrollY] = useState(0)
+
+  const handleScroll = useCallback(() => {
+    const currentY = window.scrollY
+    // Trigger spin every 300px scrolled down
+    if (currentY > lastScrollY + 300) {
+      logoControls.start({ rotate: [0, 360], transition: { duration: 0.6, ease: [0.25, 0.1, 0.25, 1] } })
+      setLastScrollY(currentY)
+    } else if (currentY < lastScrollY - 100) {
+      setLastScrollY(currentY)
+    }
+  }, [lastScrollY, logoControls])
+
+  // Initial spin on mount
+  useEffect(() => {
+    logoControls.set({ opacity: 0, rotate: -360, scale: 0.5 })
+    logoControls.start({ opacity: 1, rotate: 0, scale: 1, transition: { duration: 0.8, ease: [0.25, 0.1, 0.25, 1] } })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Spin on scroll down
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [handleScroll])
 
   return (
     <div className="min-h-screen flex flex-col items-center px-5">
@@ -79,10 +105,7 @@ export default function Home() {
               src="/logo.png"
               alt="TubeSwipe"
               className="w-8 h-8 rounded-md"
-              initial={{ opacity: 0, rotate: -360, scale: 0.5 }}
-              animate={{ opacity: 1, rotate: 0, scale: 1 }}
-              transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
-              whileHover={{ rotate: 360, transition: { duration: 0.6, ease: [0.25, 0.1, 0.25, 1] } }}
+              animate={logoControls}
             />
             <span className="font-display font-bold text-lg text-white tracking-tight">tubeswipe</span>
           </div>
