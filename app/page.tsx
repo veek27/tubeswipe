@@ -59,11 +59,64 @@ export default function Home() {
     }
   }
 
+  const [showLoginModal, setShowLoginModal] = useState(false)
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-5">
       {/* Background glow */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent/5 rounded-full blur-[120px]" />
+      </div>
+
+      {/* Top nav bar — fixed */}
+      <div className="fixed top-0 left-0 right-0 z-50 px-5 py-4">
+        <div className="max-w-[900px] mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs text-text-muted font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+            TubeSwipe
+          </div>
+
+          {user ? (
+            <div className="flex items-center gap-2">
+              {user.isAdmin && (
+                <button
+                  onClick={() => router.push('/admin')}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-accent/10 border border-accent/20 text-accent hover:bg-accent/20 text-xs font-medium transition-all"
+                >
+                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Admin
+                </button>
+              )}
+              {/* Credits badge */}
+              <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surface border border-border text-xs">
+                <div className="w-5 h-5 rounded-md bg-accent/15 flex items-center justify-center">
+                  <span className="text-accent font-bold text-[10px]">{user.credits}</span>
+                </div>
+                <span className="text-text-dim">crédit{user.credits !== 1 ? 's' : ''}</span>
+              </div>
+              {/* User button → dashboard */}
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface border border-border text-text-muted hover:text-text-primary hover:border-accent/30 text-xs font-medium transition-all"
+              >
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                {user.first_name}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowLoginModal(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface border border-border text-text-muted hover:text-text-primary hover:border-accent/30 text-xs font-medium transition-all"
+            >
+              Se connecter
+            </button>
+          )}
+        </div>
       </div>
 
       <motion.div
@@ -72,38 +125,8 @@ export default function Home() {
         transition={{ duration: 0.6 }}
         className="relative z-10 w-full max-w-[640px] text-center"
       >
-        {/* User nav */}
-        {user && (
-          <div className="absolute top-6 right-6 flex items-center gap-2">
-            {user.isAdmin && (
-              <button
-                onClick={() => router.push('/admin')}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-accent/10 border border-accent/20 text-accent hover:bg-accent/20 text-xs font-medium transition-all"
-              >
-                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                Admin
-              </button>
-            )}
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface border border-border text-text-muted hover:text-text-primary hover:border-accent/30 text-xs font-medium transition-all"
-            >
-              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              {user.first_name}
-            </button>
-          </div>
-        )}
-
-        {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-surface mb-8 text-xs text-text-muted font-medium">
-          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-          TubeSwipe
-        </div>
+        {/* Spacer for fixed nav */}
+        <div className="mb-8" />
 
         {/* Headline */}
         <h1 className="font-display text-3xl sm:text-4xl md:text-[2.75rem] font-extrabold tracking-tight leading-[1.15] mb-3">
@@ -217,6 +240,109 @@ export default function Home() {
           Fonctionne avec n&apos;importe quelle vidéo YouTube publique
         </p>
       </motion.div>
+
+      {/* Login Modal */}
+      {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
     </div>
+  )
+}
+
+function LoginModal({ onClose }: { onClose: () => void }) {
+  const [firstName, setFirstName] = useState('')
+  const [email, setEmail] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const { setUser } = useStore()
+  const router = useRouter()
+
+  const handleSubmit = async () => {
+    setError('')
+    if (!firstName.trim()) { setError('Entre ton prénom.'); return }
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError('Email invalide.'); return }
+
+    setLoading(true)
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firstName: firstName.trim(), email: email.trim().toLowerCase() }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || 'Erreur de connexion')
+      }
+      const data = await res.json()
+      setUser(data.user)
+      onClose()
+      router.push('/dashboard')
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Erreur inconnue')
+      setLoading(false)
+    }
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="fixed inset-0 z-50 flex items-center justify-center px-5 bg-black/70 backdrop-blur-md"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="bg-surface border border-border rounded-2xl p-8 w-full max-w-sm shadow-2xl shadow-black/50"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="font-display text-xl font-bold text-center mb-1">Connexion</h2>
+        <p className="text-text-muted text-sm text-center mb-6">Entre ton prénom et email pour accéder à ton compte.</p>
+
+        <div className="space-y-3">
+          <input
+            type="text"
+            value={firstName}
+            onChange={(e) => { setFirstName(e.target.value); setError('') }}
+            onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+            placeholder="Ton prénom"
+            className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3.5 text-sm text-text-primary placeholder:text-text-dim transition-all focus:border-accent/50 focus:outline-none"
+            autoFocus
+            disabled={loading}
+          />
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => { setEmail(e.target.value); setError('') }}
+            onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+            placeholder="ton@email.com"
+            className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3.5 text-sm text-text-primary placeholder:text-text-dim font-mono transition-all focus:border-accent/50 focus:outline-none"
+            disabled={loading}
+          />
+        </div>
+
+        {error && (
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-red-400 text-xs mt-3 font-mono">
+            {error}
+          </motion.p>
+        )}
+
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="w-full mt-5 bg-accent hover:bg-accent-hover text-white font-semibold py-3.5 rounded-xl text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          {loading ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              Connexion...
+            </>
+          ) : 'Se connecter'}
+        </button>
+
+        <button onClick={onClose} className="w-full mt-3 text-text-dim text-xs hover:text-text-muted transition-colors text-center">
+          Fermer
+        </button>
+      </motion.div>
+    </motion.div>
   )
 }
