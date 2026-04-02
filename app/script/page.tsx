@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useStore } from '@/store/useStore'
+import AppNav from '@/components/AppNav'
 
 export default function ScriptPage() {
   const router = useRouter()
@@ -82,7 +83,8 @@ export default function ScriptPage() {
 
   return (
     <div className="min-h-screen px-5 py-10">
-      <div className="max-w-[780px] mx-auto">
+      <AppNav />
+      <div className="max-w-[780px] mx-auto pt-12">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}

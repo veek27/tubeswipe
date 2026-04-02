@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '@/store/useStore'
+import AppNav from '@/components/AppNav'
 
 interface ChannelInfo {
   id: string
@@ -271,7 +272,8 @@ export default function NichePage() {
 
   return (
     <div className="min-h-screen px-5 py-10">
-      <div className="max-w-[800px] mx-auto">
+      <AppNav />
+      <div className="max-w-[800px] mx-auto pt-12">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}

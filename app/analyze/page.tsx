@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { useStore } from '@/store/useStore'
 import { useEffect, useState, useRef } from 'react'
 import EmailGate from '@/components/EmailGate'
+import AppNav from '@/components/AppNav'
 
 const fadeUp = {
   initial: { opacity: 0, y: 16 },
@@ -70,10 +71,11 @@ export default function AnalyzePage() {
 
   return (
     <div className="min-h-screen px-5 py-10">
+      <AppNav />
       {/* Email Gate */}
       {!isAuthenticated && <EmailGate onAuthenticated={handleAuthenticated} />}
 
-      <div className={`max-w-page mx-auto transition-all duration-500 ${!isAuthenticated ? 'blur-sm pointer-events-none select-none' : ''}`}>
+      <div className={`max-w-page mx-auto pt-12 transition-all duration-500 ${!isAuthenticated ? 'blur-sm pointer-events-none select-none' : ''}`}>
         {/* Header */}
         <motion.div {...fadeUp} transition={{ duration: 0.4 }} className="mb-8">
           <button
