@@ -23,8 +23,8 @@ export default function AppNav() {
           onClick={() => router.push('/')}
           className="flex items-center gap-2 hover:opacity-80 transition-opacity"
         >
-          <img src="/logo.png" alt="TubeSwipe" className="w-6 h-6 rounded-md" />
-          <span className="font-display font-bold text-sm text-white tracking-tight">tubeswipe</span>
+          <img src="/logo.png" alt="TubeSwipe" className="w-8 h-8 rounded-md" />
+          <span className="font-display font-bold text-lg text-white tracking-tight">tubeswipe</span>
         </button>
 
         <div className="flex items-center gap-2">

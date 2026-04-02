@@ -75,8 +75,8 @@ export default function Home() {
       <div className="fixed top-0 left-0 right-0 z-50 px-5 py-4">
         <div className="max-w-[900px] mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="TubeSwipe" className="w-6 h-6 rounded-md" />
-            <span className="font-display font-bold text-sm text-white tracking-tight">tubeswipe</span>
+            <img src="/logo.png" alt="TubeSwipe" className="w-8 h-8 rounded-md" />
+            <span className="font-display font-bold text-lg text-white tracking-tight">tubeswipe</span>
           </div>
 
           {user ? (
