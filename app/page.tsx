@@ -97,15 +97,15 @@ export default function Home() {
                 </div>
                 <span className="text-text-dim">crédit{user.credits !== 1 ? 's' : ''}</span>
               </div>
-              {/* User button → dashboard */}
+              {/* Dashboard button */}
               <button
                 onClick={() => router.push('/dashboard')}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface border border-border text-text-muted hover:text-text-primary hover:border-accent/30 text-xs font-medium transition-all"
               >
                 <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                 </svg>
-                {user.first_name}
+                Tableau de bord
               </button>
             </div>
           ) : (

@@ -182,31 +182,9 @@ export default function NichePage() {
       return
     }
 
-    // Check credits
+    // Check credits before starting
     if (!user || user.credits <= 0) {
       setShowNoCredits(true)
-      return
-    }
-
-    // Use a credit first
-    try {
-      const creditRes = await fetch('/api/use-credit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id }),
-      })
-      if (!creditRes.ok) {
-        const creditData = await creditRes.json()
-        if (creditData.error === 'no_credits') {
-          setShowNoCredits(true)
-          return
-        }
-        throw new Error(creditData.message || 'Erreur crédits')
-      }
-      const creditData = await creditRes.json()
-      updateCredits(creditData.credits)
-    } catch {
-      setError('Erreur lors de la vérification des crédits.')
       return
     }
 
@@ -248,10 +226,28 @@ export default function NichePage() {
       } catch {
         throw new Error('Réponse invalide du serveur. Réessaie.')
       }
+
+      // Script generated successfully — NOW consume the credit
+      try {
+        const creditRes = await fetch('/api/use-credit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id }),
+        })
+        if (creditRes.ok) {
+          const creditData = await creditRes.json()
+          updateCredits(creditData.credits)
+        }
+      } catch {
+        // Credit deduction failed but script was generated — not blocking
+        console.error('Credit deduction failed')
+      }
+
       setScript(data.script)
       setStoreLoading(false)
       router.push('/script')
     } catch (e: unknown) {
+      // Script generation failed — NO credit consumed
       const message = e instanceof Error ? e.message : 'Erreur inconnue'
       setError(message)
       setLoading(false)

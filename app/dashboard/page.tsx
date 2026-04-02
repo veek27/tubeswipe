@@ -48,6 +48,9 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [expandedScript, setExpandedScript] = useState<string | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [showNewProfile, setShowNewProfile] = useState(false)
+  const [newProfile, setNewProfile] = useState({ name: '', niche: '', icp: '', angle: '', style: '', extra: '' })
+  const [savingProfile, setSavingProfile] = useState(false)
 
   useEffect(() => {
     if (!user) {
@@ -87,6 +90,36 @@ export default function DashboardPage() {
       setProfiles(profiles.filter(p => p.id !== profileId))
     } catch (e) {
       console.error('Delete error:', e)
+    }
+  }
+
+  const handleCreateProfile = async () => {
+    if (!user || !newProfile.name.trim()) return
+    setSavingProfile(true)
+    try {
+      const res = await fetch('/api/profiles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          name: newProfile.name.trim(),
+          niche: newProfile.niche.trim(),
+          icp: newProfile.icp.trim(),
+          angle: newProfile.angle.trim(),
+          style: newProfile.style.trim(),
+          extra: newProfile.extra.trim(),
+        }),
+      })
+      const data = await res.json()
+      if (data.profile) {
+        setProfiles([data.profile, ...profiles])
+      }
+      setShowNewProfile(false)
+      setNewProfile({ name: '', niche: '', icp: '', angle: '', style: '', extra: '' })
+    } catch (e) {
+      console.error('Create profile error:', e)
+    } finally {
+      setSavingProfile(false)
     }
   }
 
@@ -411,10 +444,116 @@ export default function DashboardPage() {
                 exit={{ opacity: 0, y: -10 }}
                 className="space-y-3"
               >
-                {profiles.length === 0 ? (
+                {/* New profile button / form */}
+                {showNewProfile ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-surface border border-accent/30 rounded-2xl p-5"
+                  >
+                    <h3 className="font-display font-bold text-base mb-4">Nouveau profil</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-[10px] font-bold text-text-dim uppercase tracking-wider mb-1">Nom du profil <span className="text-accent">*</span></label>
+                        <input
+                          type="text"
+                          value={newProfile.name}
+                          onChange={(e) => setNewProfile({ ...newProfile, name: e.target.value })}
+                          placeholder="ex: Ma chaîne fitness"
+                          className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[10px] font-bold text-text-dim uppercase tracking-wider mb-1">Niche</label>
+                          <textarea
+                            value={newProfile.niche}
+                            onChange={(e) => setNewProfile({ ...newProfile, niche: e.target.value })}
+                            placeholder="De quoi parle ta chaîne ?"
+                            rows={2}
+                            className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono resize-y"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-text-dim uppercase tracking-wider mb-1">ICP (audience cible)</label>
+                          <textarea
+                            value={newProfile.icp}
+                            onChange={(e) => setNewProfile({ ...newProfile, icp: e.target.value })}
+                            placeholder="Qui regarde tes vidéos ?"
+                            rows={2}
+                            className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono resize-y"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-text-dim uppercase tracking-wider mb-1">Angle</label>
+                          <textarea
+                            value={newProfile.angle}
+                            onChange={(e) => setNewProfile({ ...newProfile, angle: e.target.value })}
+                            placeholder="Ton positionnement unique"
+                            rows={2}
+                            className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono resize-y"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-text-dim uppercase tracking-wider mb-1">Style</label>
+                          <textarea
+                            value={newProfile.style}
+                            onChange={(e) => setNewProfile({ ...newProfile, style: e.target.value })}
+                            placeholder="Ton ton, énergie, format"
+                            rows={2}
+                            className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono resize-y"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-text-dim uppercase tracking-wider mb-1">Infos supplémentaires</label>
+                        <textarea
+                          value={newProfile.extra}
+                          onChange={(e) => setNewProfile({ ...newProfile, extra: e.target.value })}
+                          placeholder="Produit, valeurs, CTA spécifique..."
+                          rows={2}
+                          className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-text-dim font-mono resize-y"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-3 mt-4">
+                      <button
+                        onClick={() => { setShowNewProfile(false); setNewProfile({ name: '', niche: '', icp: '', angle: '', style: '', extra: '' }) }}
+                        className="px-4 py-2.5 rounded-xl border border-border text-text-muted hover:text-text-primary text-sm font-medium transition-all"
+                      >
+                        Annuler
+                      </button>
+                      <button
+                        onClick={handleCreateProfile}
+                        disabled={!newProfile.name.trim() || savingProfile}
+                        className="flex-1 bg-accent hover:bg-accent-hover text-white font-semibold px-4 py-2.5 rounded-xl text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {savingProfile ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            Sauvegarde...
+                          </>
+                        ) : 'Créer le profil'}
+                      </button>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <button
+                    onClick={() => setShowNewProfile(true)}
+                    className="w-full bg-surface border border-dashed border-border rounded-2xl p-4 flex items-center justify-center gap-2 text-text-muted hover:text-accent hover:border-accent/30 text-sm font-medium transition-all"
+                  >
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    Nouveau profil
+                  </button>
+                )}
+
+                {profiles.length === 0 && !showNewProfile ? (
                   <div className="bg-surface border border-border rounded-2xl p-12 text-center">
                     <p className="text-text-dim text-sm mb-3">Aucun profil sauvegardé</p>
-                    <p className="text-text-dim text-xs">Crée un profil depuis la page &quot;Ta niche&quot; lors de ta prochaine analyse.</p>
+                    <p className="text-text-dim text-xs">Clique sur &quot;Nouveau profil&quot; pour en créer un.</p>
                   </div>
                 ) : (
                   profiles.map((p, i) => (
