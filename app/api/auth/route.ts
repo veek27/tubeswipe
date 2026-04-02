@@ -21,7 +21,40 @@ function verifyPassword(password: string, stored: string): boolean {
 
 export async function POST(req: Request) {
   try {
-    const { firstName, email, password, mode } = await req.json()
+    const { firstName, email, password, mode, action } = await req.json()
+
+    // Mode "refresh" = re-fetch user data from DB
+    if (mode === 'refresh' || action === 'refresh') {
+      if (!email?.trim()) {
+        return NextResponse.json({ error: 'Email requis' }, { status: 400 })
+      }
+      const { data: user } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email.trim().toLowerCase())
+        .single()
+
+      if (!user) {
+        return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 })
+      }
+
+      const { data: admin } = await supabase
+        .from('admins')
+        .select('email')
+        .eq('email', user.email)
+        .single()
+
+      return NextResponse.json({
+        user: {
+          id: user.id,
+          first_name: user.first_name,
+          email: user.email,
+          credits: user.credits,
+          plan: user.plan || 'free',
+          isAdmin: !!admin,
+        }
+      })
+    }
 
     // Mode "login" = connexion avec email + mot de passe
     if (mode === 'login') {

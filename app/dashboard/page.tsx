@@ -66,11 +66,16 @@ export default function DashboardPage() {
   const [passwordLoading, setPasswordLoading] = useState(false)
   const [passwordMsg, setPasswordMsg] = useState<{ type: 'error' | 'success'; text: string } | null>(null)
 
+  const { refreshUser } = useStore()
+
   useEffect(() => {
     if (!user) {
       router.replace('/')
       return
     }
+
+    // Refresh user data from DB (credits, plan) on every page load
+    refreshUser()
 
     const fetchData = async () => {
       try {

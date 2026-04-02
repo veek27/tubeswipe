@@ -1,11 +1,18 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useStore } from '@/store/useStore'
 
 export default function AppNav() {
   const router = useRouter()
-  const { user } = useStore()
+  const { user, refreshUser } = useStore()
+
+  // Refresh user data (credits, plan) from DB on every page load
+  useEffect(() => {
+    if (user) refreshUser()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   if (!user) return null
 

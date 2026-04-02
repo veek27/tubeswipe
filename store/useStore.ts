@@ -82,6 +82,7 @@ interface AppState {
   setLoading: (loading: boolean, message?: string) => void
   setUser: (user: UserData | null) => void
   updateCredits: (credits: number) => void
+  refreshUser: () => Promise<void>
   logout: () => void
   reset: () => void
 }
@@ -114,6 +115,34 @@ export const useStore = create<AppState>((set) => ({
     persistUser(updated)
     return { user: updated }
   }),
+  refreshUser: async () => {
+    const currentUser = loadUser()
+    if (!currentUser?.email) return
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'refresh', email: currentUser.email }),
+      })
+      if (res.ok) {
+        const { user } = await res.json()
+        if (user) {
+          const updated: UserData = {
+            id: user.id,
+            first_name: user.first_name,
+            email: user.email,
+            credits: user.credits,
+            plan: user.plan || 'free',
+            isAdmin: user.is_admin || false,
+          }
+          persistUser(updated)
+          set({ user: updated })
+        }
+      }
+    } catch (e) {
+      console.error('refreshUser error:', e)
+    }
+  },
   logout: () => {
     persistUser(null)
     set({ user: null })
