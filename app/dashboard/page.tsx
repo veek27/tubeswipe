@@ -576,6 +576,60 @@ export default function DashboardPage() {
                   analyses.map((a, i) => {
                     const hasScripts = a.scripts && a.scripts.length > 0
                     const isExpanded = expandedAnalysis === a.id
+                    const plan = user.plan || 'free'
+                    // Free = tout flouté, Starter = 5 derniers, Pro = illimité
+                    const isLocked = plan === 'free' ? true : plan === 'starter' ? i >= 5 : false
+
+                    if (isLocked) {
+                      return (
+                        <motion.div
+                          key={a.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.05 }}
+                          className="relative"
+                        >
+                          <div className="blur-[6px] pointer-events-none select-none opacity-50">
+                            <div className="bg-surface border border-border rounded-2xl overflow-hidden p-4 flex gap-4 items-start">
+                              {a.video_thumbnail && (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={a.video_thumbnail} alt="" className="w-36 aspect-video object-cover rounded-lg flex-shrink-0" />
+                              )}
+                              <div className="min-w-0 flex-1">
+                                <h3 className="font-semibold text-sm leading-snug mb-1.5">{a.video_title || 'Vidéo analysée'}</h3>
+                                <p className="text-text-dim text-xs">{a.channel_name}</p>
+                                <p className="text-text-dim text-[11px] mt-2">{formatDate(a.created_at)}</p>
+                              </div>
+                            </div>
+                          </div>
+                          {i === (plan === 'free' ? 0 : 5) && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="flex flex-col items-center gap-3 px-6 py-5 rounded-2xl bg-surface/90 backdrop-blur-sm border border-amber-500/20 max-w-[300px]">
+                                <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" className="text-amber-400">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                  </svg>
+                                </div>
+                                <p className="text-xs text-text-muted text-center leading-relaxed">
+                                  {plan === 'free'
+                                    ? 'Passe à Starter pour accéder à ton historique.'
+                                    : 'Passe à Pro pour un historique illimité.'}
+                                </p>
+                                <button
+                                  onClick={() => router.push('/pricing')}
+                                  className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-all flex items-center gap-1.5"
+                                >
+                                  {plan === 'free' ? 'Passer Starter' : 'Passer Pro'}
+                                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </motion.div>
+                      )
+                    }
 
                     return (
                       <motion.div
@@ -749,7 +803,8 @@ export default function DashboardPage() {
                         />
                       </div>
 
-                      {/* Channel YouTube search */}
+                      {/* Channel YouTube search — Pro only */}
+                      {(user.plan === 'pro') ? (
                       <div>
                         <label className="flex items-center gap-1.5 text-[10px] font-bold text-text-dim uppercase tracking-wider mb-1">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="#E40000">
@@ -823,6 +878,28 @@ export default function DashboardPage() {
                           </div>
                         )}
                       </div>
+                      ) : (
+                      <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-purple-500/10 border border-purple-500/20">
+                        <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
+                          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" className="text-purple-400">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-text-muted">Connecte ta chaîne YouTube pour enrichir tes scripts.</p>
+                          <p className="text-[10px] text-purple-400 font-medium mt-0.5">Disponible avec le plan Pro</p>
+                        </div>
+                        <button
+                          onClick={() => router.push('/pricing')}
+                          className="bg-purple-500 hover:bg-purple-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 flex-shrink-0"
+                        >
+                          Pro
+                          <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                          </svg>
+                        </button>
+                      </div>
+                      )}
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
@@ -868,17 +945,67 @@ export default function DashboardPage() {
                       </button>
                     </div>
                   </motion.div>
-                ) : (
-                  <button
-                    onClick={() => { resetProfileForm(); setShowProfileForm(true) }}
-                    className="w-full bg-surface border border-dashed border-border rounded-2xl p-4 flex items-center justify-center gap-2 text-text-muted hover:text-accent hover:border-accent/30 text-sm font-medium transition-all"
-                  >
-                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    </svg>
-                    Nouveau profil
-                  </button>
-                )}
+                ) : (() => {
+                  const plan = user.plan || 'free'
+                  const maxProfiles = plan === 'free' ? 0 : plan === 'starter' ? 1 : Infinity
+                  const canCreate = profiles.length < maxProfiles
+
+                  if (plan === 'free') {
+                    return (
+                      <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" className="text-amber-400">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                          </svg>
+                        </div>
+                        <p className="text-xs text-text-muted flex-1">Les profils sont disponibles à partir du plan Starter.</p>
+                        <button
+                          onClick={() => router.push('/pricing')}
+                          className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 flex-shrink-0"
+                        >
+                          Starter
+                          <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                          </svg>
+                        </button>
+                      </div>
+                    )
+                  }
+
+                  if (!canCreate) {
+                    return (
+                      <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-purple-500/10 border border-purple-500/20">
+                        <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
+                          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" className="text-purple-400">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                          </svg>
+                        </div>
+                        <p className="text-xs text-text-muted flex-1">Passe à Pro pour créer plusieurs profils et gérer plusieurs niches.</p>
+                        <button
+                          onClick={() => router.push('/pricing')}
+                          className="bg-purple-500 hover:bg-purple-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 flex-shrink-0"
+                        >
+                          Pro
+                          <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                          </svg>
+                        </button>
+                      </div>
+                    )
+                  }
+
+                  return (
+                    <button
+                      onClick={() => { resetProfileForm(); setShowProfileForm(true) }}
+                      className="w-full bg-surface border border-dashed border-border rounded-2xl p-4 flex items-center justify-center gap-2 text-text-muted hover:text-accent hover:border-accent/30 text-sm font-medium transition-all"
+                    >
+                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                      </svg>
+                      Nouveau profil
+                    </button>
+                  )
+                })()}
 
                 {profiles.length === 0 && !showProfileForm ? (
                   <div className="bg-surface border border-border rounded-2xl p-12 text-center">

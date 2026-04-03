@@ -365,6 +365,51 @@ export default function NichePage() {
           </motion.div>
         )}
 
+        {/* Starter lock: must use profile */}
+        {user?.plan === 'starter' && profiles.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 mb-6"
+          >
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" className="text-amber-400">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm text-text-muted">Crée d&apos;abord ton profil pour générer des scripts.</p>
+              <p className="text-[10px] text-amber-400 font-medium mt-0.5">Avec le plan Starter, les scripts sont générés via ton profil.</p>
+            </div>
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-all flex items-center gap-1.5 flex-shrink-0"
+            >
+              Créer mon profil
+              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </button>
+          </motion.div>
+        )}
+
+        {user?.plan === 'starter' && profiles.length > 0 && !activeProfileId && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 mb-6"
+          >
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" className="text-amber-400">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <p className="text-xs text-text-muted">Sélectionne ton profil ci-dessus pour continuer.</p>
+          </motion.div>
+        )}
+
         {/* Form */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -385,6 +430,7 @@ export default function NichePage() {
                 rows={2}
                 placeholder="ex: Je parle de fitness et nutrition pour les femmes actives qui veulent se remettre en forme sans passer 2h à la salle"
                 className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3.5 text-sm text-text-primary placeholder:text-text-dim font-mono transition-all resize-y"
+                readOnly={user?.plan === 'starter' && !!activeProfileId}
               />
             </div>
 
@@ -400,6 +446,7 @@ export default function NichePage() {
                 rows={2}
                 placeholder="ex: Femmes 25-40 ans, cadres ou entrepreneures, peu de temps, veulent des résultats visibles rapidement sans régime restrictif"
                 className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3.5 text-sm text-text-primary placeholder:text-text-dim font-mono transition-all resize-y"
+                readOnly={user?.plan === 'starter' && !!activeProfileId}
               />
             </div>
 
@@ -415,6 +462,7 @@ export default function NichePage() {
                 rows={2}
                 placeholder="ex: Approche minimaliste, 20 min/jour max, sans salle de sport, basée sur la science. Je démonte les mythes du fitness traditionnel."
                 className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3.5 text-sm text-text-primary placeholder:text-text-dim font-mono transition-all resize-y"
+                readOnly={user?.plan === 'starter' && !!activeProfileId}
               />
             </div>
 
@@ -430,6 +478,7 @@ export default function NichePage() {
                 rows={2}
                 placeholder="ex: Direct et cash, pas de blabla, format face caméra avec des coupes dynamiques, un peu d'humour sarcastique"
                 className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3.5 text-sm text-text-primary placeholder:text-text-dim font-mono transition-all resize-y"
+                readOnly={user?.plan === 'starter' && !!activeProfileId}
               />
             </div>
 
@@ -614,6 +663,7 @@ export default function NichePage() {
             Retour
           </button>
 
+          {user?.plan !== 'free' && (
           <button
             onClick={() => setShowSaveModal(true)}
             className="px-5 py-3 rounded-xl border border-accent/30 text-accent hover:bg-accent/10 text-sm font-medium transition-all flex items-center justify-center gap-2"
@@ -623,10 +673,11 @@ export default function NichePage() {
             </svg>
             Sauvegarder ce profil
           </button>
+          )}
 
           <button
             onClick={handleGenerate}
-            disabled={loading}
+            disabled={loading || (user?.plan === 'starter' && !activeProfileId)}
             className="flex-1 bg-accent hover:bg-accent-hover text-white font-semibold px-6 py-3 rounded-xl text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {loading ? (
