@@ -61,6 +61,7 @@ export default function DashboardPage() {
   const [channelSearching, setChannelSearching] = useState(false)
   const [channelLoading, setChannelLoading] = useState(false)
   const [showChannelDropdown, setShowChannelDropdown] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
   const [showPasswordModal, setShowPasswordModal] = useState(false)
   const [passwordForm, setPasswordForm] = useState({ current: '', newPw: '', confirm: '' })
   const [passwordLoading, setPasswordLoading] = useState(false)
@@ -407,9 +408,9 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setShowPasswordModal(true)}
-                className="px-3 py-2.5 rounded-xl border border-border text-text-dim hover:text-text-muted hover:border-accent/30 text-xs transition-all"
-                title="Modifier le mot de passe"
+                onClick={() => setShowSettings(!showSettings)}
+                className={`px-3 py-2.5 rounded-xl border text-xs transition-all ${showSettings ? 'border-accent/40 text-accent bg-accent/10' : 'border-border text-text-dim hover:text-text-muted hover:border-accent/30'}`}
+                title="Paramètres"
               >
                 <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.204-.107-.397.165-.71.505-.78.929l-.15.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.506-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894z" />
@@ -428,6 +429,103 @@ export default function DashboardPage() {
             </div>
           </div>
         </motion.div>
+
+        {/* Settings Panel */}
+        <AnimatePresence>
+          {showSettings && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="overflow-hidden"
+            >
+              <div className="bg-surface border border-border rounded-2xl p-6 mb-6">
+                <div className="flex items-center gap-2 mb-5">
+                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" className="text-text-muted">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.204-.107-.397.165-.71.505-.78.929l-.15.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.506-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <h3 className="font-display text-sm font-bold uppercase tracking-wider text-text-muted">Paramètres du compte</h3>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                  {/* Email */}
+                  <div className="bg-surface-2 rounded-xl px-4 py-3.5">
+                    <p className="text-[10px] font-bold text-text-dim uppercase tracking-wider mb-1">Email</p>
+                    <p className="text-sm text-text-primary font-mono truncate">{user.email}</p>
+                  </div>
+
+                  {/* Prénom */}
+                  <div className="bg-surface-2 rounded-xl px-4 py-3.5">
+                    <p className="text-[10px] font-bold text-text-dim uppercase tracking-wider mb-1">Prénom</p>
+                    <p className="text-sm text-text-primary">{user.first_name}</p>
+                  </div>
+
+                  {/* Forfait */}
+                  <div className="bg-surface-2 rounded-xl px-4 py-3.5">
+                    <p className="text-[10px] font-bold text-text-dim uppercase tracking-wider mb-1">Forfait</p>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-sm font-semibold capitalize ${
+                        user.plan === 'pro' ? 'text-purple-400' : user.plan === 'starter' ? 'text-amber-400' : 'text-text-primary'
+                      }`}>
+                        {user.plan || 'Free'}
+                      </span>
+                      {user.plan === 'free' && (
+                        <button
+                          onClick={() => router.push('/pricing')}
+                          className="text-[10px] font-medium text-accent hover:underline"
+                        >
+                          Upgrader
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Crédits */}
+                  <div className="bg-surface-2 rounded-xl px-4 py-3.5">
+                    <p className="text-[10px] font-bold text-text-dim uppercase tracking-wider mb-1">Crédits restants</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-accent">{user.credits}</span>
+                      <span className="text-text-dim text-xs">crédit{user.credits !== 1 ? 's' : ''}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setShowPasswordModal(true)}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface-2 border border-border text-text-muted hover:text-text-primary hover:border-accent/30 text-xs font-medium transition-all"
+                  >
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                    </svg>
+                    Modifier le mot de passe
+                  </button>
+                  <button
+                    onClick={() => router.push('/pricing')}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface-2 border border-border text-text-muted hover:text-text-primary hover:border-accent/30 text-xs font-medium transition-all"
+                  >
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                    Gérer mon abonnement
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface-2 border border-border text-text-dim hover:text-red-400 hover:border-red-400/30 text-xs font-medium transition-all"
+                  >
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Se déconnecter
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* New Analysis Form */}
         <motion.div
