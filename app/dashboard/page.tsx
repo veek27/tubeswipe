@@ -290,7 +290,7 @@ export default function DashboardPage() {
 
   const handleLogout = () => {
     logout()
-    router.push('/')
+    window.location.href = '/'
   }
 
   const handleChangePassword = async () => {
