@@ -383,7 +383,7 @@ export default function DashboardPage() {
     },
   ]
 
-  if (!hasMounted) return null
+  if (!hasMounted || !user) return null
 
   return (
     <div className="min-h-screen px-5 py-10">
