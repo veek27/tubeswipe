@@ -499,7 +499,34 @@ export default function NichePage() {
           </div>
         </motion.div>
 
-        {/* YouTube Channel Section */}
+        {/* YouTube Channel Section — Pro only */}
+        {user?.plan !== 'pro' ? (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className="mt-6 flex items-center gap-3 px-5 py-4 rounded-2xl bg-purple-500/10 border border-purple-500/20"
+          >
+            <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center flex-shrink-0">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" className="text-purple-400">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm text-text-muted font-medium">Connecte ta chaîne YouTube</p>
+              <p className="text-[10px] text-purple-400 mt-0.5">Enrichis tes scripts avec les données de ta chaîne — Plan Pro</p>
+            </div>
+            <button
+              onClick={() => router.push('/pricing')}
+              className="bg-purple-500 hover:bg-purple-600 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-all flex items-center gap-1.5 flex-shrink-0"
+            >
+              Pro
+              <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </button>
+          </motion.div>
+        ) : (
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -643,6 +670,7 @@ export default function NichePage() {
             )}
           </AnimatePresence>
         </motion.div>
+        )}
 
         {/* Error */}
         {error && (

@@ -572,64 +572,17 @@ export default function DashboardPage() {
                       Analyser une vidéo
                     </button>
                   </div>
-                ) : (
-                  analyses.map((a, i) => {
+                ) : (() => {
+                  const plan = user.plan || 'free'
+                  const visibleLimit = plan === 'free' ? 0 : plan === 'starter' ? 5 : Infinity
+                  const visibleAnalyses = analyses.slice(0, visibleLimit)
+                  const lockedAnalyses = analyses.slice(visibleLimit)
+
+                  return (
+                    <>
+                      {visibleAnalyses.map((a, i) => {
                     const hasScripts = a.scripts && a.scripts.length > 0
                     const isExpanded = expandedAnalysis === a.id
-                    const plan = user.plan || 'free'
-                    // Free = tout flouté, Starter = 5 derniers, Pro = illimité
-                    const isLocked = plan === 'free' ? true : plan === 'starter' ? i >= 5 : false
-
-                    if (isLocked) {
-                      return (
-                        <motion.div
-                          key={a.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.05 }}
-                          className="relative"
-                        >
-                          <div className="blur-[6px] pointer-events-none select-none opacity-50">
-                            <div className="bg-surface border border-border rounded-2xl overflow-hidden p-4 flex gap-4 items-start">
-                              {a.video_thumbnail && (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={a.video_thumbnail} alt="" className="w-36 aspect-video object-cover rounded-lg flex-shrink-0" />
-                              )}
-                              <div className="min-w-0 flex-1">
-                                <h3 className="font-semibold text-sm leading-snug mb-1.5">{a.video_title || 'Vidéo analysée'}</h3>
-                                <p className="text-text-dim text-xs">{a.channel_name}</p>
-                                <p className="text-text-dim text-[11px] mt-2">{formatDate(a.created_at)}</p>
-                              </div>
-                            </div>
-                          </div>
-                          {i === (plan === 'free' ? 0 : 5) && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="flex flex-col items-center gap-3 px-6 py-5 rounded-2xl bg-surface/90 backdrop-blur-sm border border-amber-500/20 max-w-[300px]">
-                                <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" className="text-amber-400">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                  </svg>
-                                </div>
-                                <p className="text-xs text-text-muted text-center leading-relaxed">
-                                  {plan === 'free'
-                                    ? 'Passe à Starter pour accéder à ton historique.'
-                                    : 'Passe à Pro pour un historique illimité.'}
-                                </p>
-                                <button
-                                  onClick={() => router.push('/pricing')}
-                                  className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-all flex items-center gap-1.5"
-                                >
-                                  {plan === 'free' ? 'Passer Starter' : 'Passer Pro'}
-                                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                                  </svg>
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </motion.div>
-                      )
-                    }
 
                     return (
                       <motion.div
@@ -766,8 +719,51 @@ export default function DashboardPage() {
                         </AnimatePresence>
                       </motion.div>
                     )
-                  })
-                )}
+                  })}
+
+                      {/* Locked analyses cadenas */}
+                      {lockedAnalyses.length > 0 && (
+                        <>
+                          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" className="text-amber-400">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                              </svg>
+                            </div>
+                            <p className="text-xs text-text-muted flex-1">
+                              {plan === 'free'
+                                ? 'Passe à Starter pour accéder à ton historique.'
+                                : `${lockedAnalyses.length} analyse${lockedAnalyses.length > 1 ? 's' : ''} masquée${lockedAnalyses.length > 1 ? 's' : ''}. Passe à Pro pour un historique illimité.`}
+                            </p>
+                            <button
+                              onClick={() => router.push('/pricing')}
+                              className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 flex-shrink-0"
+                            >
+                              {plan === 'free' ? 'Passer Starter' : 'Passer Pro'}
+                              <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                              </svg>
+                            </button>
+                          </div>
+                          {lockedAnalyses.slice(0, 3).map((a) => (
+                            <div key={a.id} className="blur-[6px] pointer-events-none select-none opacity-40">
+                              <div className="bg-surface border border-border rounded-2xl overflow-hidden p-4 flex gap-4 items-start">
+                                {a.video_thumbnail && (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img src={a.video_thumbnail} alt="" className="w-36 aspect-video object-cover rounded-lg flex-shrink-0" />
+                                )}
+                                <div className="min-w-0 flex-1">
+                                  <h3 className="font-semibold text-sm leading-snug mb-1.5">{a.video_title || 'Vidéo analysée'}</h3>
+                                  <p className="text-text-dim text-xs">{a.channel_name}</p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </>
+                      )}
+                    </>
+                  )
+                })()}
               </motion.div>
             )}
 
