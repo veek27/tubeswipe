@@ -257,10 +257,14 @@ export default function NichePage() {
         if (creditRes.ok) {
           const creditData = await creditRes.json()
           updateCredits(creditData.credits)
+        } else {
+          console.error('Credit deduction failed:', creditRes.status)
+          // Force local credit update even if API failed
+          updateCredits(Math.max(0, user.credits - 1))
         }
       } catch {
-        // Credit deduction failed but script was generated — not blocking
-        console.error('Credit deduction failed')
+        console.error('Credit deduction fetch error')
+        updateCredits(Math.max(0, user.credits - 1))
       }
 
       setScript(data.script)

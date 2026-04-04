@@ -29,16 +29,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'no_credits', message: 'Plus de crédits disponibles' }, { status: 403 })
     }
 
-    // Decrement credit
+    // Decrement credit and verify the update
     const newCredits = user.credits - 1
-    const { error } = await supabase
+    const { data: updated, error } = await supabase
       .from('users')
       .update({ credits: newCredits })
       .eq('id', userId)
+      .select('credits')
+      .single()
 
     if (error) {
       console.error('Credit update error:', error)
       return NextResponse.json({ error: 'Erreur mise à jour crédits' }, { status: 500 })
+    }
+
+    if (!updated) {
+      console.error('Credit update returned no data — RLS may be blocking the update')
+      return NextResponse.json({ error: 'Mise à jour crédits échouée' }, { status: 500 })
     }
 
     // Log transaction
@@ -49,7 +56,7 @@ export async function POST(req: Request) {
       description: 'Génération d\'un script',
     })
 
-    return NextResponse.json({ credits: newCredits })
+    return NextResponse.json({ credits: updated.credits })
   } catch (e) {
     console.error('Use credit error:', e)
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })

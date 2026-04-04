@@ -136,11 +136,11 @@ Description précise : texte sur la miniature, expression du visage, couleurs, c
 [NOTES DE PRODUCTION]
 2-3 conseils concrets pour le tournage : ton à adopter, moments à accentuer, rythme à suivre.`
 
-    // Retry with long waits to respect rate limits
+    // Retry with short waits (must stay within 60s Vercel timeout)
     let response
     let lastError: unknown = null
 
-    for (let attempt = 0; attempt < 3; attempt++) {
+    for (let attempt = 0; attempt < 2; attempt++) {
       try {
         response = await anthropic.messages.create({
           model: 'claude-sonnet-4-20250514',
@@ -152,8 +152,8 @@ Description précise : texte sur la miniature, expression du visage, couleurs, c
       } catch (err: unknown) {
         lastError = err
         const apiErr = err as { status?: number }
-        if ((apiErr.status === 529 || apiErr.status === 429) && attempt < 2) {
-          await new Promise(r => setTimeout(r, 15000 * (attempt + 1)))
+        if ((apiErr.status === 529 || apiErr.status === 429) && attempt < 1) {
+          await new Promise(r => setTimeout(r, 3000))
           continue
         }
         if (apiErr.status === 529 || apiErr.status === 429) break
