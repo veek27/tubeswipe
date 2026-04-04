@@ -8,9 +8,13 @@ import AppNav from '@/components/AppNav'
 
 export default function ScriptPage() {
   const router = useRouter()
-  const { script, analysis, nicheData, user, savedAnalysisId, reset } = useStore()
+  const { script, analysis, nicheData, user, savedAnalysisId, reset, hasMounted, setMounted } = useStore()
   const [copied, setCopied] = useState(false)
   const savedRef = useRef(false)
+
+  useEffect(() => {
+    if (!hasMounted) setMounted()
+  }, [hasMounted, setMounted])
 
   useEffect(() => {
     if (!script) router.replace('/')

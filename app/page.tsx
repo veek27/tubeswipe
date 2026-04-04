@@ -12,7 +12,11 @@ export default function Home() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const { setYoutubeUrl, setVideoInfo, setAnalysis, setLoading: setStoreLoading, user } = useStore()
+  const { setYoutubeUrl, setVideoInfo, setAnalysis, setLoading: setStoreLoading, user, hasMounted, setMounted } = useStore()
+
+  useEffect(() => {
+    if (!hasMounted) setMounted()
+  }, [hasMounted, setMounted])
 
   const isValidYoutubeUrl = (u: string) => {
     return /(?:youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9_-]{11}/.test(u)
@@ -110,7 +114,7 @@ export default function Home() {
             <span className="font-display font-bold text-lg text-white tracking-tight">tubeswipe</span>
           </div>
 
-          {user ? (
+          {hasMounted && user ? (
             <div className="flex items-center gap-2">
               {user.isAdmin && (
                 <button

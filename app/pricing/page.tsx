@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { useStore } from '@/store/useStore'
@@ -60,7 +61,11 @@ const plans = [
 
 export default function PricingPage() {
   const router = useRouter()
-  const { user } = useStore()
+  const { user, hasMounted, setMounted } = useStore()
+
+  useEffect(() => {
+    if (!hasMounted) setMounted()
+  }, [hasMounted, setMounted])
 
   const currentPlan = user?.plan || 'free'
 
@@ -116,7 +121,7 @@ export default function PricingPage() {
         </motion.div>
 
         {/* Current status */}
-        {user && (
+        {hasMounted && user && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}

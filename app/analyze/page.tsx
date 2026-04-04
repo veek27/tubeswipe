@@ -14,9 +14,13 @@ const fadeUp = {
 
 export default function AnalyzePage() {
   const router = useRouter()
-  const { videoInfo, analysis, youtubeUrl, user, setSavedAnalysisId } = useStore()
+  const { videoInfo, analysis, youtubeUrl, user, setSavedAnalysisId, hasMounted, setMounted } = useStore()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const savedRef = useRef(false)
+
+  useEffect(() => {
+    if (!hasMounted) setMounted()
+  }, [hasMounted, setMounted])
 
   useEffect(() => {
     if (!analysis) router.replace('/')

@@ -72,6 +72,7 @@ interface AppState {
   isLoading: boolean
   loadingMessage: string
   user: UserData | null
+  hasMounted: boolean
 
   setYoutubeUrl: (url: string) => void
   setVideoInfo: (info: VideoInfo) => void
@@ -83,6 +84,7 @@ interface AppState {
   setUser: (user: UserData | null) => void
   updateCredits: (credits: number) => void
   refreshUser: () => Promise<void>
+  setMounted: () => void
   logout: () => void
   reset: () => void
 }
@@ -96,7 +98,8 @@ export const useStore = create<AppState>((set) => ({
   savedAnalysisId: null,
   isLoading: false,
   loadingMessage: '',
-  user: loadUser(),
+  user: null,
+  hasMounted: false,
 
   setYoutubeUrl: (url) => set({ youtubeUrl: url }),
   setVideoInfo: (info) => set({ videoInfo: info }),
@@ -133,7 +136,7 @@ export const useStore = create<AppState>((set) => ({
             email: user.email,
             credits: user.credits,
             plan: user.plan || 'free',
-            isAdmin: user.is_admin || false,
+            isAdmin: user.isAdmin || false,
           }
           persistUser(updated)
           set({ user: updated })
@@ -142,6 +145,10 @@ export const useStore = create<AppState>((set) => ({
     } catch (e) {
       console.error('refreshUser error:', e)
     }
+  },
+  setMounted: () => {
+    const saved = loadUser()
+    set({ hasMounted: true, user: saved })
   },
   logout: () => {
     persistUser(null)

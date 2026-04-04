@@ -44,7 +44,7 @@ type Tab = 'analyses' | 'profiles'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { user, logout, setAnalysis, setVideoInfo, setYoutubeUrl, setSavedAnalysisId } = useStore()
+  const { user, logout, setAnalysis, setVideoInfo, setYoutubeUrl, setSavedAnalysisId, hasMounted, setMounted } = useStore()
   const [tab, setTab] = useState<Tab>('analyses')
   const [analyses, setAnalyses] = useState<AnalysisRecord[]>([])
   const [profiles, setProfiles] = useState<ProfileRecord[]>([])
@@ -115,7 +115,13 @@ export default function DashboardPage() {
     }
   }
 
+  // Hydrate user from localStorage on mount
   useEffect(() => {
+    if (!hasMounted) setMounted()
+  }, [hasMounted, setMounted])
+
+  useEffect(() => {
+    if (!hasMounted) return
     if (!user) {
       router.replace('/')
       return
@@ -149,7 +155,7 @@ export default function DashboardPage() {
     }
 
     fetchData()
-  }, [user, router])
+  }, [user, router, hasMounted])
 
   const handleDeleteProfile = async (profileId: string) => {
     if (!user) return
@@ -376,6 +382,8 @@ export default function DashboardPage() {
     },
   ]
 
+  if (!hasMounted) return null
+
   return (
     <div className="min-h-screen px-5 py-10">
       <AppNav />
@@ -574,7 +582,7 @@ export default function DashboardPage() {
                   </div>
                 ) : (() => {
                   const plan = user.plan || 'free'
-                  const visibleLimit = plan === 'free' ? 0 : plan === 'starter' ? 5 : Infinity
+                  const visibleLimit = plan === 'free' ? 1 : plan === 'starter' ? 5 : Infinity
                   const visibleAnalyses = analyses.slice(0, visibleLimit)
                   const lockedAnalyses = analyses.slice(visibleLimit)
 
@@ -732,7 +740,7 @@ export default function DashboardPage() {
                             </div>
                             <p className="text-xs text-text-muted flex-1">
                               {plan === 'free'
-                                ? 'Passe à Starter pour accéder à ton historique.'
+                                ? 'Passe à Starter pour accéder à tout ton historique.'
                                 : `${lockedAnalyses.length} analyse${lockedAnalyses.length > 1 ? 's' : ''} masquée${lockedAnalyses.length > 1 ? 's' : ''}. Passe à Pro pour un historique illimité.`}
                             </p>
                             <button

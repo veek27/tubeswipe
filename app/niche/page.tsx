@@ -36,7 +36,7 @@ interface Profile {
 
 export default function NichePage() {
   const router = useRouter()
-  const { analysis, setNicheData, setScript, setLoading: setStoreLoading, user, updateCredits } = useStore()
+  const { analysis, setNicheData, setScript, setLoading: setStoreLoading, user, updateCredits, hasMounted, setMounted } = useStore()
   const [showNoCredits, setShowNoCredits] = useState(false)
 
   const [niche, setNiche] = useState('')
@@ -59,8 +59,13 @@ export default function NichePage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
 
   useEffect(() => {
+    if (!hasMounted) setMounted()
+  }, [hasMounted, setMounted])
+
+  useEffect(() => {
+    if (!hasMounted) return
     if (!analysis) router.replace('/')
-  }, [analysis, router])
+  }, [analysis, router, hasMounted])
 
   // Load profiles from Supabase
   useEffect(() => {

@@ -7,15 +7,20 @@ import { useStore } from '@/store/useStore'
 
 export default function AppNav() {
   const router = useRouter()
-  const { user, refreshUser } = useStore()
+  const { user, refreshUser, hasMounted, setMounted } = useStore()
+
+  // Hydrate user from localStorage on mount (avoids SSR mismatch)
+  useEffect(() => {
+    if (!hasMounted) setMounted()
+  }, [hasMounted, setMounted])
 
   // Refresh user data (credits, plan) from DB on every page load
   useEffect(() => {
-    if (user) refreshUser()
+    if (hasMounted && user) refreshUser()
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [hasMounted])
 
-  if (!user) return null
+  if (!hasMounted || !user) return null
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 px-5 py-4">

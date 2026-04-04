@@ -8,11 +8,15 @@ import AppNav from '@/components/AppNav'
 
 export default function ThankYouPage() {
   const router = useRouter()
-  const { user, refreshUser } = useStore()
+  const { user, refreshUser, hasMounted, setMounted } = useStore()
+
+  useEffect(() => {
+    if (!hasMounted) setMounted()
+  }, [hasMounted, setMounted])
 
   // Refresh user data to get updated credits/plan from webhook
   useEffect(() => {
-    if (user) {
+    if (hasMounted && user) {
       // Refresh multiple times to catch webhook processing delay
       refreshUser()
       const t1 = setTimeout(() => refreshUser(), 3000)
@@ -20,7 +24,7 @@ export default function ThankYouPage() {
       return () => { clearTimeout(t1); clearTimeout(t2) }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [hasMounted])
 
   return (
     <div className="min-h-screen flex flex-col items-center px-5">
