@@ -224,7 +224,7 @@ export default function NichePage() {
       const res = await fetch('/api/generate-script', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ analysis, ...nicheData }),
+        body: JSON.stringify({ analysis, ...nicheData, userId: user.id }),
       })
 
       if (!res.ok) {
@@ -247,24 +247,9 @@ export default function NichePage() {
         throw new Error('Réponse invalide du serveur. Réessaie.')
       }
 
-      // Script generated successfully — NOW consume the credit
-      try {
-        const creditRes = await fetch('/api/use-credit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: user.id }),
-        })
-        if (creditRes.ok) {
-          const creditData = await creditRes.json()
-          updateCredits(creditData.credits)
-        } else {
-          console.error('Credit deduction failed:', creditRes.status)
-          // Force local credit update even if API failed
-          updateCredits(Math.max(0, user.credits - 1))
-        }
-      } catch {
-        console.error('Credit deduction fetch error')
-        updateCredits(Math.max(0, user.credits - 1))
+      // Credits already deducted server-side — update local state
+      if (data.credits !== undefined) {
+        updateCredits(data.credits)
       }
 
       setScript(data.script)

@@ -1,20 +1,64 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createClient } from '@supabase/supabase-js'
 
-export const maxDuration = 60 // Allow up to 60s for retries on Vercel
+export const maxDuration = 60 // Allow up to 60s on Vercel
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 })
 
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
+
 export async function POST(request: NextRequest) {
   try {
-    const { analysis, niche, icp, angle, style, extra, channelInfo } = await request.json()
+    const { analysis, niche, icp, angle, style, extra, channelInfo, userId } = await request.json()
 
     if (!analysis || !niche || !icp) {
       return NextResponse.json({ error: 'Données manquantes' }, { status: 400 })
     }
 
+    // ── 1. Check and deduct credit BEFORE generating ──
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID requis' }, { status: 400 })
+    }
+
+    const { data: user } = await supabase
+      .from('users')
+      .select('credits')
+      .eq('id', userId)
+      .single()
+
+    if (!user || user.credits <= 0) {
+      return NextResponse.json({ error: 'no_credits', message: 'Plus de crédits disponibles' }, { status: 403 })
+    }
+
+    // Deduct credit immediately
+    const newCredits = user.credits - 1
+    const { data: updated, error: creditError } = await supabase
+      .from('users')
+      .update({ credits: newCredits })
+      .eq('id', userId)
+      .select('credits')
+      .single()
+
+    if (creditError || !updated) {
+      console.error('Credit deduction failed:', creditError)
+      return NextResponse.json({ error: 'Erreur déduction crédit' }, { status: 500 })
+    }
+
+    // Log transaction
+    await supabase.from('credit_transactions').insert({
+      user_id: userId,
+      amount: -1,
+      type: 'usage',
+      description: 'Génération d\'un script',
+    })
+
+    // ── 2. Generate the script ──
     const systemPrompt = `Tu es un scriptwriter YouTube d'élite. Tu appliques la méthodologie des meilleurs créateurs YouTube francophones (Safian, etc.).
 
 ## TES PRINCIPES FONDAMENTAUX (à respecter ABSOLUMENT) :
@@ -162,7 +206,18 @@ Description précise : texte sur la miniature, expression du visage, couleurs, c
     }
 
     if (!response) {
-      console.error('API failed after retries:', lastError)
+      // Script generation failed — refund the credit
+      console.error('API failed after retries, refunding credit:', lastError)
+      await supabase
+        .from('users')
+        .update({ credits: user.credits })
+        .eq('id', userId)
+      await supabase.from('credit_transactions').insert({
+        user_id: userId,
+        amount: 1,
+        type: 'refund',
+        description: 'Remboursement — échec génération script',
+      })
       return NextResponse.json(
         { error: 'L\'IA est temporairement surchargée. Attends 1 minute et réessaie.' },
         { status: 503 }
@@ -174,7 +229,7 @@ Description précise : texte sur la miniature, expression du visage, couleurs, c
       .map((block) => block.text)
       .join('\n')
 
-    return NextResponse.json({ script })
+    return NextResponse.json({ script, credits: updated.credits })
   } catch (error: unknown) {
     console.error('Generate script error:', error)
     const message = error instanceof Error ? error.message : 'Erreur interne'
