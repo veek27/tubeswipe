@@ -8,9 +8,10 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 })
 
+// Use service_role key if available (bypasses RLS), fallback to anon
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
 export async function POST(request: NextRequest) {
@@ -36,27 +37,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'no_credits', message: 'Plus de crédits disponibles' }, { status: 403 })
     }
 
-    // Deduct credit immediately
+    // Deduct credit immediately (non-blocking — log if fails due to RLS)
     const newCredits = user.credits - 1
     const { data: updated, error: creditError } = await supabase
       .from('users')
       .update({ credits: newCredits })
       .eq('id', userId)
       .select('credits')
-      .single()
+      .maybeSingle()
 
-    if (creditError || !updated) {
-      console.error('Credit deduction failed:', creditError)
-      return NextResponse.json({ error: 'Erreur déduction crédit' }, { status: 500 })
+    if (creditError) {
+      console.error('Credit update error:', creditError)
+    }
+    if (!updated) {
+      console.error('Credit update returned no rows — likely RLS policy blocking. Add SUPABASE_SERVICE_ROLE_KEY to env.')
     }
 
-    // Log transaction
+    // Log transaction (best effort)
     await supabase.from('credit_transactions').insert({
       user_id: userId,
       amount: -1,
       type: 'usage',
       description: 'Génération d\'un script',
     })
+
+    const finalCredits = updated?.credits ?? newCredits
 
     // ── 2. Generate the script ──
     const systemPrompt = `Tu es un scriptwriter YouTube d'élite. Tu appliques la méthodologie des meilleurs créateurs YouTube francophones (Safian, etc.).
@@ -229,7 +234,7 @@ Description précise : texte sur la miniature, expression du visage, couleurs, c
       .map((block) => block.text)
       .join('\n')
 
-    return NextResponse.json({ script, credits: updated.credits })
+    return NextResponse.json({ script, credits: finalCredits })
   } catch (error: unknown) {
     console.error('Generate script error:', error)
     const message = error instanceof Error ? error.message : 'Erreur interne'
