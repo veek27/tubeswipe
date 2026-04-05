@@ -31,14 +31,14 @@ export default function AppNav() {
         >
           <motion.img
             src="/logo.png"
-            alt="TubeSwipe"
+            alt="TubeSwap"
             className="w-8 h-8 rounded-md"
             initial={{ opacity: 0, rotate: -360, scale: 0.5 }}
             animate={{ opacity: 1, rotate: 0, scale: 1 }}
             transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
             whileHover={{ rotate: 360, transition: { duration: 0.6, ease: [0.25, 0.1, 0.25, 1] } }}
           />
-          <span className="font-display font-bold text-lg text-white tracking-tight">tubeswipe</span>
+          <span className="font-display font-bold text-lg text-white tracking-tight">tubeswap</span>
         </button>
 
         <div className="flex items-center gap-2">

@@ -107,11 +107,11 @@ export default function Home() {
           <div className="flex items-center gap-2">
             <motion.img
               src="/logo.png"
-              alt="TubeSwipe"
+              alt="TubeSwap"
               className="w-8 h-8 rounded-md"
               animate={logoControls}
             />
-            <span className="font-display font-bold text-lg text-white tracking-tight">tubeswipe</span>
+            <span className="font-display font-bold text-lg text-white tracking-tight">tubeswap</span>
           </div>
 
           {hasMounted && user ? (
@@ -335,7 +335,7 @@ function LoginModal({ onClose }: { onClose: () => void }) {
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="font-display text-xl font-bold text-center mb-1">Connexion</h2>
-        <p className="text-text-muted text-sm text-center mb-6">Connecte-toi à ton compte TubeSwipe.</p>
+        <p className="text-text-muted text-sm text-center mb-6">Connecte-toi à ton compte TubeSwap.</p>
 
         <div className="space-y-3">
           <input

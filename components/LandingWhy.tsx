@@ -318,7 +318,7 @@ export default function LandingWhy() {
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#E40000" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
             </svg>
-            <span className="text-accent font-bold">3 minutes avec TubeSwipe</span>
+            <span className="text-accent font-bold">3 minutes avec TubeSwap</span>
           </div>
         </div>
       </motion.div>

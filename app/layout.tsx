@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "TubeSwipe — Vole le sujet. Adapte à ta niche.",
+  title: "TubeSwap — Vole le sujet. Adapte à ta niche.",
   description: "Analyse une vidéo YouTube tendance, comprends pourquoi elle fonctionne, et génère un script adapté à ta niche.",
   icons: {
     icon: [

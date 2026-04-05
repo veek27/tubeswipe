@@ -48,7 +48,7 @@ export interface UserData {
 function loadUser(): UserData | null {
   if (typeof window === 'undefined') return null
   try {
-    const raw = localStorage.getItem('tubeswipe-user')
+    const raw = localStorage.getItem('tubeswap-user')
     return raw ? JSON.parse(raw) : null
   } catch { return null }
 }
@@ -56,9 +56,9 @@ function loadUser(): UserData | null {
 function persistUser(user: UserData | null) {
   if (typeof window === 'undefined') return
   if (user) {
-    localStorage.setItem('tubeswipe-user', JSON.stringify(user))
+    localStorage.setItem('tubeswap-user', JSON.stringify(user))
   } else {
-    localStorage.removeItem('tubeswipe-user')
+    localStorage.removeItem('tubeswap-user')
   }
 }
 

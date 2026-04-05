@@ -32,7 +32,7 @@ interface Stats {
   monthlyRevenue: number
 }
 
-const ADMIN_STORAGE_KEY = 'tubeswipe-admin-session'
+const ADMIN_STORAGE_KEY = 'tubeswap-admin-session'
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -212,7 +212,7 @@ export default function AdminPage() {
               </div>
             </div>
 
-            <h1 className="font-display text-xl font-bold text-center mb-1">Admin TubeSwipe</h1>
+            <h1 className="font-display text-xl font-bold text-center mb-1">Admin TubeSwap</h1>
             <p className="text-text-dim text-xs text-center mb-6">Accès réservé</p>
 
             <input

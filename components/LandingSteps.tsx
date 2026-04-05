@@ -87,11 +87,11 @@ function StepCopyLink() {
         </div>
       </div>
 
-      {/* TubeSwipe input mockup at bottom */}
+      {/* TubeSwap input mockup at bottom */}
       <div className="absolute bottom-3 left-3 right-3">
         <div className={`bg-[#1a1a1a] rounded-lg border transition-all duration-300 px-3 py-2 flex items-center gap-2 ${inputHasText ? 'border-accent/40' : 'border-white/[0.06]'}`}>
           <div className="w-1 h-1 rounded-full bg-accent animate-pulse" />
-          <span className="text-[7px] font-medium text-white/30">TubeSwipe</span>
+          <span className="text-[7px] font-medium text-white/30">TubeSwap</span>
           <div className="flex-1 bg-white/[0.03] rounded-md px-2 py-1">
             <span className={`text-[7px] font-mono transition-all duration-500 ${inputHasText ? 'text-white/70' : 'text-white/15'}`}>
               {inputHasText ? 'youtube.com/watch?v=dQw4w...' : 'Colle un lien YouTube ici...'}
@@ -156,7 +156,7 @@ function StepAnalysis() {
           <div className="flex items-center justify-between px-3 py-2 border-b border-white/[0.06]">
             <div className="flex items-center gap-2">
               <div className="w-1 h-1 rounded-full bg-accent animate-pulse" />
-              <span className="text-[7px] font-medium text-white/30">TubeSwipe</span>
+              <span className="text-[7px] font-medium text-white/30">TubeSwap</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="px-1.5 py-0.5 rounded bg-accent/10 border border-accent/20">
@@ -315,7 +315,7 @@ function StepScript() {
           <div className="flex items-center justify-between px-3 py-2 border-b border-white/[0.06]">
             <div className="flex items-center gap-2">
               <div className="w-1 h-1 rounded-full bg-accent animate-pulse" />
-              <span className="text-[7px] font-medium text-white/30">TubeSwipe</span>
+              <span className="text-[7px] font-medium text-white/30">TubeSwap</span>
               <span className="text-[6px] text-white/15">/ Script</span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -386,7 +386,7 @@ export default function LandingSteps() {
     {
       num: 1,
       title: 'Copie le lien',
-      desc: 'Trouve une vidéo qui cartonne, copie le lien et colle-le sur TubeSwipe.',
+      desc: 'Trouve une vidéo qui cartonne, copie le lien et colle-le sur TubeSwap.',
       component: <StepCopyLink />,
     },
     {

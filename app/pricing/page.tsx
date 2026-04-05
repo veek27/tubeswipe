@@ -80,7 +80,7 @@ export default function PricingPage() {
       const params = new URLSearchParams()
       if (user?.email) params.set('email', user.email)
       if (user?.id) params.set('metadata[user_id]', user.id)
-      params.set('redirect_url', 'https://tubeswipe.io/thank-you')
+      params.set('redirect_url', 'https://tubeswap.io/thank-you')
       window.open(`${url}?${params.toString()}`, '_blank')
     }
   }

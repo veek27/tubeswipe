@@ -6,7 +6,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'tubeswipe-admin-2024'
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'tubeswap-admin-2024'
 
 export async function POST(req: Request) {
   try {
