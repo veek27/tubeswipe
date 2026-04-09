@@ -255,7 +255,7 @@ export default function Home() {
             <motion.img
               src="/mascot.svg"
               alt=""
-              className="w-10 h-10 opacity-60"
+              className="w-16 h-16 opacity-70"
               animate={{ rotate: [0, -5, 5, -5, 0], scale: [1, 1.05, 1] }}
               transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
             />
