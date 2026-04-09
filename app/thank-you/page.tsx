@@ -40,16 +40,20 @@ export default function ThankYouPage() {
         transition={{ duration: 0.6 }}
         className="relative z-10 w-full max-w-[520px] text-center pt-32 pb-10 flex flex-col items-center"
       >
-        {/* Success icon */}
+        {/* Success icon — mascot celebration */}
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ duration: 0.5, delay: 0.2, type: 'spring', stiffness: 200 }}
-          className="w-20 h-20 rounded-full bg-emerald-500/10 border-2 border-emerald-500/30 flex items-center justify-center mb-8"
+          className="w-24 h-24 rounded-full bg-emerald-500/10 border-2 border-emerald-500/30 flex items-center justify-center mb-8"
         >
-          <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="#22c55e" strokeWidth="2.5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
+          <motion.img
+            src="/mascot.svg"
+            alt=""
+            className="w-14 h-14"
+            animate={{ rotate: [0, -8, 8, -4, 0] }}
+            transition={{ duration: 1.5, delay: 0.7, ease: 'easeInOut' }}
+          />
         </motion.div>
 
         {/* Title */}

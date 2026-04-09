@@ -109,7 +109,7 @@ export default function ScriptPage() {
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <div className="h-6 w-1 bg-accent rounded-full" />
+                <img src="/mascot.svg" alt="" className="w-7 h-7 opacity-50" />
                 <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight">Ton script personnalisé</h1>
               </div>
               <p className="text-text-muted text-sm ml-4">

@@ -399,7 +399,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <div className="flex items-center gap-3 mb-1">
-                <div className="h-6 w-1 bg-accent rounded-full" />
+                <img src="/mascot.svg" alt="" className="w-7 h-7 opacity-50" />
                 <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight">
                   Salut {user.first_name}
                 </h1>
@@ -664,11 +664,7 @@ export default function DashboardPage() {
               >
                 {analyses.length === 0 ? (
                   <div className="bg-surface border border-border rounded-2xl p-12 text-center">
-                    <div className="w-14 h-14 rounded-2xl bg-surface-2 flex items-center justify-center mx-auto mb-4">
-                      <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#555" strokeWidth="1.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                      </svg>
-                    </div>
+                    <img src="/mascot.svg" alt="" className="w-16 h-16 mx-auto mb-4 opacity-40" />
                     <p className="text-text-dim text-sm mb-1">Aucune analyse pour le moment</p>
                     <p className="text-text-dim text-xs mb-4">Lance ta première analyse pour commencer.</p>
                     <button

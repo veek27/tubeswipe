@@ -725,12 +725,21 @@ export default function NichePage() {
             animate={{ opacity: 1 }}
             className="mt-4 flex items-center gap-3 text-text-muted text-xs"
           >
-            <div className="flex gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-accent" style={{ animation: 'pulse-dot 1.4s infinite 0s' }} />
-              <span className="w-1.5 h-1.5 rounded-full bg-accent" style={{ animation: 'pulse-dot 1.4s infinite 0.2s' }} />
-              <span className="w-1.5 h-1.5 rounded-full bg-accent" style={{ animation: 'pulse-dot 1.4s infinite 0.4s' }} />
+            <motion.img
+              src="/mascot.svg"
+              alt=""
+              className="w-6 h-6 opacity-50"
+              animate={{ rotate: [0, -5, 5, -5, 0], scale: [1, 1.05, 1] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <div className="flex items-center gap-2">
+              <div className="flex gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent" style={{ animation: 'pulse-dot 1.4s infinite 0s' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-accent" style={{ animation: 'pulse-dot 1.4s infinite 0.2s' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-accent" style={{ animation: 'pulse-dot 1.4s infinite 0.4s' }} />
+              </div>
+              Réécriture du script adapté à ta niche...
             </div>
-            Réécriture du script adapté à ta niche...
           </motion.div>
         )}
       </div>

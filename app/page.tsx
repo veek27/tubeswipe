@@ -249,14 +249,23 @@ export default function Home() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="mt-6 flex items-center justify-center gap-3 text-text-muted text-sm"
+            className="mt-6 flex flex-col items-center gap-3 text-text-muted text-sm"
           >
-            <div className="flex gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-accent" style={{ animation: 'pulse-dot 1.4s infinite 0s' }} />
-              <span className="w-1.5 h-1.5 rounded-full bg-accent" style={{ animation: 'pulse-dot 1.4s infinite 0.2s' }} />
-              <span className="w-1.5 h-1.5 rounded-full bg-accent" style={{ animation: 'pulse-dot 1.4s infinite 0.4s' }} />
+            <motion.img
+              src="/mascot.svg"
+              alt=""
+              className="w-10 h-10 opacity-60"
+              animate={{ rotate: [0, -5, 5, -5, 0], scale: [1, 1.05, 1] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <div className="flex items-center gap-3">
+              <div className="flex gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent" style={{ animation: 'pulse-dot 1.4s infinite 0s' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-accent" style={{ animation: 'pulse-dot 1.4s infinite 0.2s' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-accent" style={{ animation: 'pulse-dot 1.4s infinite 0.4s' }} />
+              </div>
+              Extraction du sujet, analyse des tendances...
             </div>
-            Extraction du sujet, analyse des tendances...
           </motion.div>
         )}
 
