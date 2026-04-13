@@ -29,25 +29,25 @@ const CITIES = [
   'Genève', 'Lausanne', 'Zurich', 'Berne', 'Fribourg', 'Neuchâtel', 'Sion',
 ]
 
-// Messages variés et engageants
+// Messages variés — ton pro mais accessible
 const MESSAGES_STARTER = [
-  (name: string) => `${name} vient de rejoindre l'aventure Starter`,
-  (name: string) => `${name} a débloqué ses 5 premiers scripts`,
-  (name: string) => `${name} vient de passer Starter — ses scripts arrivent`,
-  (name: string) => `Bienvenue à ${name} qui rejoint le plan Starter`,
-  (name: string) => `${name} a fait le move — Starter activé`,
-  (name: string) => `${name} vient de lancer sa machine à scripts`,
-  (name: string) => `${name} a choisi Starter pour scaler sa chaîne`,
-  (name: string) => `Nouveau Starter : ${name} est dans la place`,
+  (name: string) => `${name} vient de s'abonner au plan Starter`,
+  (name: string) => `${name} a activé son abonnement Starter`,
+  (name: string) => `${name} vient de passer au plan Starter`,
+  (name: string) => `${name} a rejoint TubeSwap en Starter`,
+  (name: string) => `${name} a débloqué le plan Starter`,
+  (name: string) => `${name} vient de s'abonner — plan Starter activé`,
+  (name: string) => `Nouveau membre : ${name} en plan Starter`,
+  (name: string) => `${name} a choisi le plan Starter`,
 ]
 
 const MESSAGES_PRO = [
-  (name: string) => `${name} passe Pro — scripts illimités activés`,
-  (name: string) => `${name} est passé Pro, plus de limites`,
-  (name: string) => `${name} vient de débloquer le mode Pro`,
-  (name: string) => `${name} a upgrade en Pro — il est sérieux`,
-  (name: string) => `${name} all-in sur le Pro, respect`,
-  (name: string) => `${name} vient de rejoindre les Pros`,
+  (name: string) => `${name} vient de passer au plan Pro`,
+  (name: string) => `${name} a activé le plan Pro — scripts illimités`,
+  (name: string) => `${name} a rejoint TubeSwap en Pro`,
+  (name: string) => `${name} vient de s'abonner au plan Pro`,
+  (name: string) => `${name} a débloqué le plan Pro`,
+  (name: string) => `Nouveau membre Pro : ${name}`,
 ]
 
 const EMOJIS_STARTER = ['🔥', '🚀', '⚡', '💪', '✨', '🎯']
