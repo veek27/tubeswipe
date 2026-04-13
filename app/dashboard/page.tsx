@@ -399,7 +399,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <div className="flex items-center gap-3 mb-1">
-                <img src="/mascot.svg" alt="" className="w-7 h-7 opacity-50" />
+                <img src="/mascot.svg" alt="" className="w-9 h-9 opacity-80" />
                 <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight">
                   Salut {user.first_name}
                 </h1>
@@ -664,7 +664,7 @@ export default function DashboardPage() {
               >
                 {analyses.length === 0 ? (
                   <div className="bg-surface border border-border rounded-2xl p-12 text-center">
-                    <img src="/mascot.svg" alt="" className="w-16 h-16 mx-auto mb-4 opacity-40" />
+                    <img src="/mascot.svg" alt="" className="w-20 h-20 mx-auto mb-4 opacity-70" />
                     <p className="text-text-dim text-sm mb-1">Aucune analyse pour le moment</p>
                     <p className="text-text-dim text-xs mb-4">Lance ta première analyse pour commencer.</p>
                     <button

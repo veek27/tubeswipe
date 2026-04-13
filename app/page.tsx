@@ -112,7 +112,7 @@ export default function Home() {
               animate={logoControls}
             />
             <span className="font-display font-bold text-lg text-white tracking-tight">tubeswap</span>
-            <img src="/mascot.svg" alt="" className="w-5 h-5 opacity-40 hidden sm:block" />
+            <img src="/mascot.svg" alt="" className="w-7 h-7 opacity-80 hidden sm:block" />
           </div>
 
           {hasMounted && user ? (
@@ -255,7 +255,7 @@ export default function Home() {
             <motion.img
               src="/mascot.svg"
               alt=""
-              className="w-16 h-16 opacity-70"
+              className="w-20 h-20 opacity-90"
               animate={{ rotate: [0, -5, 5, -5, 0], scale: [1, 1.05, 1] }}
               transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
             />
@@ -272,7 +272,7 @@ export default function Home() {
 
         {/* Footer hint */}
         <div className="flex items-center gap-2 mt-10">
-          <img src="/mascot.svg" alt="" className="w-4 h-4 opacity-25" />
+          <img src="/mascot.svg" alt="" className="w-6 h-6 opacity-50" />
           <p className="text-text-dim text-xs">
             Fonctionne avec n&apos;importe quelle vidéo YouTube publique
           </p>

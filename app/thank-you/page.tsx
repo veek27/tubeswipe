@@ -50,7 +50,7 @@ export default function ThankYouPage() {
           <motion.img
             src="/mascot.svg"
             alt=""
-            className="w-14 h-14"
+            className="w-16 h-16"
             animate={{ rotate: [0, -8, 8, -4, 0] }}
             transition={{ duration: 1.5, delay: 0.7, ease: 'easeInOut' }}
           />
