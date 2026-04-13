@@ -3,13 +3,18 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-const FIRST_NAMES = [
+// 60% hommes, 40% femmes
+const MALE_NAMES = [
   'Julien', 'Thomas', 'Lucas', 'Hugo', 'Léo', 'Nathan', 'Maxime', 'Alexandre',
   'Antoine', 'Raphaël', 'Mathis', 'Théo', 'Enzo', 'Louis', 'Arthur', 'Paul',
   'Clément', 'Victor', 'Nicolas', 'Adrien', 'Romain', 'Bastien', 'Florian',
+  'Valentin', 'Gabriel', 'Quentin', 'Dylan', 'Axel', 'Sacha', 'Mehdi',
+]
+
+const FEMALE_NAMES = [
   'Emma', 'Léa', 'Chloé', 'Manon', 'Camille', 'Sarah', 'Laura', 'Julie',
   'Marine', 'Pauline', 'Océane', 'Lisa', 'Clara', 'Inès', 'Jade', 'Zoé',
-  'Mathilde', 'Charlotte', 'Margaux', 'Anaïs', 'Louise', 'Romane', 'Ambre',
+  'Mathilde', 'Charlotte', 'Margaux', 'Anaïs',
 ]
 
 const CITIES = [
@@ -49,7 +54,9 @@ const EMOJIS_STARTER = ['🔥', '🚀', '⚡', '💪', '✨', '🎯']
 const EMOJIS_PRO = ['👑', '💎', '🏆', '⭐', '🔱', '🎖️']
 
 function generateNotification() {
-  const firstName = FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)]
+  const isMale = Math.random() < 0.6
+  const names = isMale ? MALE_NAMES : FEMALE_NAMES
+  const firstName = names[Math.floor(Math.random() * names.length)]
   const lastInitial = String.fromCharCode(65 + Math.floor(Math.random() * 26))
   const city = CITIES[Math.floor(Math.random() * CITIES.length)]
   const isPro = Math.random() > 0.65
@@ -125,11 +132,9 @@ export default function SocialProofToast() {
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="pointer-events-auto bg-surface/95 backdrop-blur-md border border-border/80 rounded-2xl px-5 py-4 shadow-2xl shadow-black/40 flex items-start gap-4 max-w-[400px]"
           >
-            {/* Emoji badge */}
-            <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
-              notification.plan === 'Pro' ? 'bg-purple-500/15' : 'bg-accent/10'
-            }`}>
-              {notification.emoji}
+            {/* Party emoji */}
+            <div className="flex-shrink-0 text-xl">
+              🎉
             </div>
 
             <div className="min-w-0 flex-1">
