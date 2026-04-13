@@ -24,18 +24,50 @@ const CITIES = [
   'Genève', 'Lausanne', 'Zurich', 'Berne', 'Fribourg', 'Neuchâtel', 'Sion',
 ]
 
+// Messages variés et engageants
+const MESSAGES_STARTER = [
+  (name: string) => `${name} vient de rejoindre l'aventure Starter`,
+  (name: string) => `${name} a débloqué ses 5 premiers scripts`,
+  (name: string) => `${name} vient de passer Starter — ses scripts arrivent`,
+  (name: string) => `Bienvenue à ${name} qui rejoint le plan Starter`,
+  (name: string) => `${name} a fait le move — Starter activé`,
+  (name: string) => `${name} vient de lancer sa machine à scripts`,
+  (name: string) => `${name} a choisi Starter pour scaler sa chaîne`,
+  (name: string) => `Nouveau Starter : ${name} est dans la place`,
+]
+
+const MESSAGES_PRO = [
+  (name: string) => `${name} passe Pro — scripts illimités activés`,
+  (name: string) => `${name} est passé Pro, plus de limites`,
+  (name: string) => `${name} vient de débloquer le mode Pro`,
+  (name: string) => `${name} a upgrade en Pro — il est sérieux`,
+  (name: string) => `${name} all-in sur le Pro, respect`,
+  (name: string) => `${name} vient de rejoindre les Pros`,
+]
+
+const EMOJIS_STARTER = ['🔥', '🚀', '⚡', '💪', '✨', '🎯']
+const EMOJIS_PRO = ['👑', '💎', '🏆', '⭐', '🔱', '🎖️']
+
 function generateNotification() {
   const firstName = FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)]
   const lastInitial = String.fromCharCode(65 + Math.floor(Math.random() * 26))
   const city = CITIES[Math.floor(Math.random() * CITIES.length)]
-  const plan = Math.random() > 0.35 ? 'Starter' : 'Pro'
-  const timeAgo = Math.floor(Math.random() * 12) + 1
+  const isPro = Math.random() > 0.65
+  const plan = isPro ? 'Pro' : 'Starter'
+  const timeAgo = Math.floor(Math.random() * 15) + 1
+  const name = `${firstName} ${lastInitial}.`
+
+  const messages = isPro ? MESSAGES_PRO : MESSAGES_STARTER
+  const emojis = isPro ? EMOJIS_PRO : EMOJIS_STARTER
+  const message = messages[Math.floor(Math.random() * messages.length)](name)
+  const emoji = emojis[Math.floor(Math.random() * emojis.length)]
 
   return {
-    name: `${firstName} ${lastInitial}.`,
+    message,
+    emoji,
     city,
     plan,
-    timeAgo: `il y a ${timeAgo} min`,
+    timeAgo: timeAgo === 1 ? 'à l\'instant' : `il y a ${timeAgo} min`,
     id: Date.now(),
   }
 }
@@ -49,8 +81,8 @@ export default function SocialProofToast() {
     setNotification(notif)
     setVisible(true)
 
-    // Hide after 4s
-    setTimeout(() => setVisible(false), 4000)
+    // Hide after 5.5s
+    setTimeout(() => setVisible(false), 5500)
   }, [])
 
   useEffect(() => {
@@ -66,7 +98,7 @@ export default function SocialProofToast() {
     function startLoop() {
       // Then every 8s to 25s randomly
       function scheduleNext() {
-        const delay = 8000 + Math.random() * 17000 // 8s to 25s
+        const delay = 8000 + Math.random() * 17000
         interval = setTimeout(() => {
           showNotification()
           scheduleNext()
@@ -87,28 +119,44 @@ export default function SocialProofToast() {
         {visible && notification && (
           <motion.div
             key={notification.id}
-            initial={{ opacity: 0, y: 20, x: -10 }}
-            animate={{ opacity: 1, y: 0, x: 0 }}
-            exit={{ opacity: 0, y: 10, x: -10 }}
-            transition={{ duration: 0.4, ease: 'easeOut' }}
-            className="pointer-events-auto bg-surface border border-border rounded-xl px-4 py-3 shadow-xl shadow-black/30 flex items-center gap-3 max-w-[340px]"
+            initial={{ opacity: 0, y: 30, x: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 15, x: -10, scale: 0.97 }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            className="pointer-events-auto bg-surface/95 backdrop-blur-md border border-border/80 rounded-2xl px-5 py-4 shadow-2xl shadow-black/40 flex items-start gap-4 max-w-[400px]"
           >
-            {/* Green dot — "live" indicator */}
-            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-success/15 flex items-center justify-center">
-              <div className="w-2.5 h-2.5 rounded-full bg-success animate-pulse" />
+            {/* Emoji badge */}
+            <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
+              notification.plan === 'Pro' ? 'bg-purple-500/15' : 'bg-accent/10'
+            }`}>
+              {notification.emoji}
             </div>
 
-            <div className="min-w-0">
-              <p className="text-xs text-text-primary font-medium truncate">
-                <span className="font-semibold">{notification.name}</span>
-                {' '}vient de passer{' '}
-                <span className={notification.plan === 'Pro' ? 'text-purple-400 font-bold' : 'text-accent font-bold'}>
+            <div className="min-w-0 flex-1">
+              <p className="text-[13px] text-text-primary font-medium leading-snug">
+                {notification.message}
+              </p>
+              <div className="flex items-center gap-2 mt-1.5">
+                <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                  notification.plan === 'Pro'
+                    ? 'bg-purple-500/15 text-purple-400'
+                    : 'bg-accent/10 text-accent'
+                }`}>
                   {notification.plan}
                 </span>
-              </p>
-              <p className="text-[10px] text-text-dim mt-0.5">
-                {notification.city} · {notification.timeAgo}
-              </p>
+                <span className="text-[10px] text-text-dim">
+                  {notification.city}
+                </span>
+                <span className="text-[10px] text-text-dim">·</span>
+                <span className="text-[10px] text-text-dim">
+                  {notification.timeAgo}
+                </span>
+              </div>
+            </div>
+
+            {/* Live pulse */}
+            <div className="flex-shrink-0 mt-1">
+              <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
             </div>
           </motion.div>
         )}
