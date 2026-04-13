@@ -6,6 +6,7 @@ import { motion, useAnimation } from 'framer-motion'
 import { useStore } from '@/store/useStore'
 import LandingSteps from '@/components/LandingSteps'
 import LandingWhy from '@/components/LandingWhy'
+import SocialProofToast from '@/components/SocialProofToast'
 
 export default function Home() {
   const [url, setUrl] = useState('')
@@ -289,6 +290,9 @@ export default function Home() {
       <div className="relative z-10 w-full max-w-[900px]">
         <LandingWhy />
       </div>
+
+      {/* Social proof notifications */}
+      <SocialProofToast />
 
       {/* Login Modal */}
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
