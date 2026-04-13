@@ -54,8 +54,8 @@ export default function SocialProofToast() {
   }, [])
 
   useEffect(() => {
-    // First notification after 8-15s
-    const initialDelay = 8000 + Math.random() * 7000
+    // First notification after 3-5s
+    const initialDelay = 3000 + Math.random() * 2000
     const firstTimer = setTimeout(() => {
       showNotification()
       startLoop()
@@ -64,9 +64,9 @@ export default function SocialProofToast() {
     let interval: NodeJS.Timeout
 
     function startLoop() {
-      // Then every 20s to 3min randomly
+      // Then every 8s to 25s randomly
       function scheduleNext() {
-        const delay = 20000 + Math.random() * 160000 // 20s to 3min
+        const delay = 8000 + Math.random() * 17000 // 8s to 25s
         interval = setTimeout(() => {
           showNotification()
           scheduleNext()

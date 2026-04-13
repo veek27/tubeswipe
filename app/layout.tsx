@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import GlobalSocialProof from "@/components/GlobalSocialProof";
 
 export const metadata: Metadata = {
   title: "TubeSwap — Vole le sujet. Adapte à ta niche.",
@@ -23,6 +24,7 @@ export default function RootLayout({
       <body className="antialiased">
         <div className="min-h-screen">
           {children}
+          <GlobalSocialProof />
         </div>
       </body>
     </html>
