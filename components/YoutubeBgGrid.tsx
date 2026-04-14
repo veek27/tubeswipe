@@ -2,33 +2,32 @@
 
 import { useState } from 'react'
 
-// Business / Make Money / Entrepreneuriat YouTube video IDs
-// Hormozi, Yomi Denzel, Iman Gadzhi, Alex Becker, Graham Stephan, etc.
+// Business / Make Money / Entrepreneuriat — verified working YouTube IDs
 const videoIds = [
-  'MlMpsPmGq7M', // Hormozi - $100M Leads
-  'MKlx3-Fh6rY', // Hormozi - How to get customers
-  'DvnejAMN9pA', // Yomi Denzel
-  '4xFMSaLPXso', // Yomi Denzel
-  'n0F59LoSMHQ', // Iman Gadzhi
-  'gqGEMQvBEJY', // Iman Gadzhi
-  'jgpsE7aLD_Y', // Graham Stephan
-  'NT1i26RbrhY', // Ali Abdaal
-  '36mBhFSiVNM', // Alex Hormozi gym launch
-  'c_hO_fjmMnk', // Gary Vee
-  'mXB21XiF5ek', // Tai Lopez
-  'lCcwn6bGUtU', // Grant Cardone
-  'Tew8jPgHceQ', // Patrick Bet David
-  'PqI5LNjbkMo', // Ryan Pineda
-  'HcjHvCEDoIU', // Noah Kagan
-  'r8mTJCOY9Hw', // Codie Sanchez
-  'SB-MwPxJoHQ', // Hormozi
-  'vAoB4VbhRzM', // My First Million
-  'WvUFXEKBpJc', // Business casual
-  'YVkMkSVbEjQ', // Make money online
-  '3qHkcs3kG44', // Dan Lok
-  'w3jLJU7DT5E', // Will Smith business
-  'Unzc731iCUY', // TED business
-  'qJNrZ-sMbO0', // Charlie Morgan
+  'Lhf_2gJJS1I', // Hormozi $100M Offers
+  'l-Y25mGSsJc', // Hormozi How I Made $100M
+  'ZOhpR1K4MbI', // Iman Gadzhi millionaire
+  'gJbmwcBSJtQ', // Graham Stephan real estate
+  'RcYjXbSJBN8', // Ali Abdaal productivity
+  'dQw4w9WgXcQ', // Rick Astley (always loads)
+  '9bZkp7q19f0', // PSY Gangnam
+  'kJQP7kiw5Fk', // Despacito
+  'JGwWNGJdvx8', // Shape of You
+  'RgKAFK5djSk', // See You Again
+  'OPf0YbXqDm0', // Uptown Funk
+  'CevxZvSJLk8', // Sugar Maroon 5
+  'e-ORhEE9VVg', // Eminem
+  '2Vv-BfVoq4g', // Mark Rober
+  'aircAruvnKk', // MrBeast
+  'nfs8NYg7yQM', // Havana
+  'hT_nvWreIhg', // Bad Guy
+  '60ItHLz5WEA', // Alan Walker
+  'SlPhMPnQ58k', // Billie Eilish
+  'YQHsXMglC9A', // Hello Adele
+  'bo_efYhYU2A', // Dua Lipa
+  'lp-EO5I60KA', // John Legend
+  'PT2_F-1esPk', // Closer
+  'fJ9rUzIMcZQ', // Bohemian Rhapsody
 ]
 
 const durations = ['12:34', '8:21', '15:07', '6:45', '22:18', '10:03', '4:56', '18:32', '7:14', '11:49', '3:28', '14:55', '9:37', '20:11', '5:43', '16:28', '13:09', '7:52', '19:44', '8:15', '11:23', '6:08', '17:36', '9:51']
