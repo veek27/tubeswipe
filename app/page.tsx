@@ -205,13 +205,13 @@ export default function Home() {
 
         {/* Headline */}
         <h1 className="font-display text-3xl sm:text-4xl md:text-[2.75rem] font-extrabold tracking-tight leading-[1.15] mb-3">
-          Arrête d&apos;inventer des sujets.
+          Une vidéo virale. Ton script.
           <br />
-          <span className="text-accent">Copie ce qui marche déjà.</span>
+          <span className="text-accent">3 minutes.</span>
         </h1>
 
         <p className="text-text-muted text-sm sm:text-base max-w-sm mx-auto mb-10 leading-relaxed">
-          Ton prochain script YouTube en 3 minutes, basé sur une vidéo qui cartonne déjà.
+          Transforme n&apos;importe quelle vidéo YouTube en un script adapté à ta niche, prêt à tourner.
         </p>
 
         {/* Input card */}
