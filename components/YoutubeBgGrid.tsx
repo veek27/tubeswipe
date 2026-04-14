@@ -51,8 +51,8 @@ export default function YoutubeBgGrid() {
           gridTemplateColumns: 'repeat(6, 1fr)',
           gridAutoRows: '100px',
           padding: '0',
-          filter: 'blur(8px)',
-          opacity: 0.04,
+          filter: 'blur(2px)',
+          opacity: 0.12,
           transform: 'scale(1.1)',
         }}
       >
@@ -69,7 +69,7 @@ export default function YoutubeBgGrid() {
       <div
         className="absolute inset-0"
         style={{
-          background: 'linear-gradient(to bottom, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.7) 30%, rgba(10,10,10,0.7) 70%, rgba(10,10,10,0.95) 100%)',
+          background: 'linear-gradient(to bottom, rgba(10,10,10,0.85) 0%, rgba(10,10,10,0.5) 30%, rgba(10,10,10,0.5) 70%, rgba(10,10,10,0.85) 100%)',
         }}
       />
 
