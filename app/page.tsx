@@ -6,6 +6,8 @@ import { motion, useAnimation, AnimatePresence } from 'framer-motion'
 import { useStore } from '@/store/useStore'
 import LandingSteps from '@/components/LandingSteps'
 import LandingWhy from '@/components/LandingWhy'
+import CreatorsBanner from '@/components/CreatorsBanner'
+import LandingTestimonials from '@/components/LandingTestimonials'
 
 export default function Home() {
   const [url, setUrl] = useState('')
@@ -191,6 +193,9 @@ export default function Home() {
         {/* Spacer for fixed nav */}
         <div className="mb-8" />
 
+        {/* Creators social proof */}
+        <CreatorsBanner />
+
         {/* Headline */}
         <h1 className="font-display text-3xl sm:text-4xl md:text-[2.75rem] font-extrabold tracking-tight leading-[1.15] mb-3">
           Arrête d&apos;inventer des sujets.
@@ -299,6 +304,11 @@ export default function Home() {
       {/* Animated Steps */}
       <div className="relative z-10 w-full max-w-[900px]">
         <LandingSteps />
+      </div>
+
+      {/* Testimonials */}
+      <div className="relative z-10 w-full max-w-[900px]">
+        <LandingTestimonials />
       </div>
 
       {/* Why section */}
