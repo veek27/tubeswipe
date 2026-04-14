@@ -29,29 +29,8 @@ const CITIES = [
   'Genève', 'Lausanne', 'Zurich', 'Berne', 'Fribourg', 'Neuchâtel', 'Sion',
 ]
 
-// Messages variés — ton pro mais accessible
-const MESSAGES_STARTER = [
-  (name: string) => `${name} vient de s'abonner au plan Starter`,
-  (name: string) => `${name} a activé son abonnement Starter`,
-  (name: string) => `${name} vient de passer au plan Starter`,
-  (name: string) => `${name} a rejoint TubeSwap en Starter`,
-  (name: string) => `${name} a débloqué le plan Starter`,
-  (name: string) => `${name} vient de s'abonner — plan Starter activé`,
-  (name: string) => `Nouveau membre : ${name} en plan Starter`,
-  (name: string) => `${name} a choisi le plan Starter`,
-]
-
-const MESSAGES_PRO = [
-  (name: string) => `${name} vient de passer au plan Pro`,
-  (name: string) => `${name} a activé le plan Pro — scripts illimités`,
-  (name: string) => `${name} a rejoint TubeSwap en Pro`,
-  (name: string) => `${name} vient de s'abonner au plan Pro`,
-  (name: string) => `${name} a débloqué le plan Pro`,
-  (name: string) => `Nouveau membre Pro : ${name}`,
-]
-
-const EMOJIS_STARTER = ['🔥', '🚀', '⚡', '💪', '✨', '🎯']
-const EMOJIS_PRO = ['👑', '💎', '🏆', '⭐', '🔱', '🎖️']
+const MESSAGE_STARTER = (name: string) => `${name} vient de s'abonner au plan Starter`
+const MESSAGE_PRO = (name: string) => `${name} vient de s'abonner au plan Pro`
 
 function generateNotification() {
   const isMale = Math.random() < 0.6
@@ -64,14 +43,10 @@ function generateNotification() {
   const timeAgo = Math.floor(Math.random() * 15) + 1
   const name = `${firstName} ${lastInitial}.`
 
-  const messages = isPro ? MESSAGES_PRO : MESSAGES_STARTER
-  const emojis = isPro ? EMOJIS_PRO : EMOJIS_STARTER
-  const message = messages[Math.floor(Math.random() * messages.length)](name)
-  const emoji = emojis[Math.floor(Math.random() * emojis.length)]
+  const message = isPro ? MESSAGE_PRO(name) : MESSAGE_STARTER(name)
 
   return {
     message,
-    emoji,
     city,
     plan,
     timeAgo: timeAgo === 1 ? 'à l\'instant' : `il y a ${timeAgo} min`,
@@ -126,10 +101,10 @@ export default function SocialProofToast() {
         {visible && notification && (
           <motion.div
             key={notification.id}
-            initial={{ opacity: 0, y: 30, x: -20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 15, x: -10, scale: 0.97 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 0, y: 40, x: -20, scale: 0.9 }}
+            animate={{ opacity: 1, y: [40, -8, 3, 0], x: 0, scale: [0.9, 1.02, 0.99, 1] }}
+            exit={{ opacity: 0, y: 20, x: -15, scale: 0.95 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], y: { duration: 0.7, times: [0, 0.5, 0.75, 1] }, scale: { duration: 0.7, times: [0, 0.5, 0.75, 1] } }}
             className="pointer-events-auto bg-surface/95 backdrop-blur-md border border-border/80 rounded-2xl px-5 py-4 shadow-2xl shadow-black/40 flex items-start gap-4 max-w-[400px]"
           >
             {/* Party emoji */}
