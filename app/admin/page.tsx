@@ -126,24 +126,33 @@ export default function AdminPage() {
   const handleUpdateUser = async () => {
     if (!editingUser) return
     try {
-      // If plan changed, don't send credits — let backend auto-set from plan config
-      // If only credits changed (same plan), send credits
-      const planChanged = editPlan && editPlan !== editingUser.plan
-      const creditsChanged = editCredits && parseInt(editCredits) !== editingUser.credits
+      const planChanged = editPlan !== editingUser.plan
+      const creditsChanged = editCredits !== '' && parseInt(editCredits) !== editingUser.credits
 
-      await fetch('/api/admin/update-user', {
+      const body: Record<string, unknown> = { userId: editingUser.id }
+
+      if (planChanged) {
+        body.plan = editPlan
+        // Don't send credits — backend auto-sets from plan config
+      } else if (creditsChanged) {
+        body.credits = parseInt(editCredits)
+      }
+
+      const res = await fetch('/api/admin/update-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: editingUser.id,
-          credits: planChanged ? undefined : (creditsChanged ? parseInt(editCredits) : undefined),
-          plan: planChanged ? editPlan : undefined,
-        }),
+        body: JSON.stringify(body),
       })
+      const data = await res.json()
+      if (!res.ok) {
+        alert(`Erreur: ${data.error || 'Mise à jour échouée'}`)
+        return
+      }
       setEditingUser(null)
       fetchData()
     } catch (e) {
       console.error('Update error:', e)
+      alert('Erreur réseau')
     }
   }
 
