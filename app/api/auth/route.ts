@@ -1,11 +1,15 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
+import { isDisposableEmail } from '@/lib/disposable-emails'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
+
+const MAX_ACCOUNTS_PER_IP = 3
+const IP_WINDOW_HOURS = 24
 
 function hashPassword(password: string): string {
   const salt = crypto.randomBytes(16).toString('hex')
@@ -19,7 +23,15 @@ function verifyPassword(password: string, stored: string): boolean {
   return hash === verify
 }
 
-export async function POST(req: Request) {
+function getClientIP(req: NextRequest): string {
+  return (
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    req.headers.get('x-real-ip') ||
+    'unknown'
+  )
+}
+
+export async function POST(req: NextRequest) {
   try {
     const { firstName, email, password, mode, action } = await req.json()
 
@@ -113,6 +125,26 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Email invalide' }, { status: 400 })
     }
 
+    // Block disposable/temporary emails
+    if (isDisposableEmail(email.trim())) {
+      return NextResponse.json({ error: 'Les adresses email temporaires ne sont pas acceptées. Utilise une vraie adresse email.' }, { status: 400 })
+    }
+
+    // Rate limit by IP — max 3 accounts per IP per 24h
+    const clientIP = getClientIP(req)
+    if (clientIP !== 'unknown') {
+      const since = new Date(Date.now() - IP_WINDOW_HOURS * 60 * 60 * 1000).toISOString()
+      const { count } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .eq('signup_ip', clientIP)
+        .gte('created_at', since)
+
+      if (count !== null && count >= MAX_ACCOUNTS_PER_IP) {
+        return NextResponse.json({ error: 'Trop de comptes créés récemment. Réessaie plus tard.' }, { status: 429 })
+      }
+    }
+
     // Check if user already exists
     const { data: existing } = await supabase
       .from('users')
@@ -124,7 +156,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Un compte existe déjà avec cet email. Connecte-toi.' }, { status: 409 })
     }
 
-    // Create new user with password
+    // Create new user with password + store signup IP
     const passwordHash = hashPassword(password)
 
     const { data: newUser, error } = await supabase
@@ -133,6 +165,7 @@ export async function POST(req: Request) {
         first_name: firstName.trim(),
         email: email.trim().toLowerCase(),
         password_hash: passwordHash,
+        signup_ip: clientIP,
       })
       .select()
       .single()
