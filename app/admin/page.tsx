@@ -126,13 +126,18 @@ export default function AdminPage() {
   const handleUpdateUser = async () => {
     if (!editingUser) return
     try {
+      // If plan changed, don't send credits — let backend auto-set from plan config
+      // If only credits changed (same plan), send credits
+      const planChanged = editPlan && editPlan !== editingUser.plan
+      const creditsChanged = editCredits && parseInt(editCredits) !== editingUser.credits
+
       await fetch('/api/admin/update-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: editingUser.id,
-          credits: editCredits ? parseInt(editCredits) : undefined,
-          plan: editPlan || undefined,
+          credits: planChanged ? undefined : (creditsChanged ? parseInt(editCredits) : undefined),
+          plan: planChanged ? editPlan : undefined,
         }),
       })
       setEditingUser(null)
