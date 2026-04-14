@@ -204,14 +204,14 @@ export default function Home() {
         <CreatorsBanner />
 
         {/* Headline */}
-        <h1 className="font-display text-3xl sm:text-4xl md:text-[2.75rem] font-extrabold tracking-tight leading-[1.15] mb-3">
-          Une vidéo virale. Ton script.
-          <br />
-          <span className="text-accent">3 minutes.</span>
+        <h1 className="font-display text-2xl sm:text-4xl md:text-[2.75rem] font-extrabold tracking-tight leading-[1.15] mb-4">
+          Et si ton prochain script YouTube
+          <br className="hidden sm:block" />
+          <span className="text-accent"> devenait viral ?</span>
         </h1>
 
-        <p className="text-text-muted text-sm sm:text-base max-w-sm mx-auto mb-10 leading-relaxed">
-          Transforme n&apos;importe quelle vidéo YouTube en un script adapté à ta niche, prêt à tourner.
+        <p className="text-text-muted text-sm sm:text-base max-w-lg mx-auto mb-10 leading-relaxed">
+          Colle le lien d&apos;une vidéo qui cartonne. TubeSwap analyse le sujet, l&apos;adapte à ta niche et te génère un script prêt à tourner.
         </p>
 
         {/* Input card */}
