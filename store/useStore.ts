@@ -149,6 +149,30 @@ export const useStore = create<AppState>((set) => ({
   setMounted: () => {
     const saved = loadUser()
     set({ hasMounted: true, user: saved })
+    // Auto-refresh credits from DB to avoid stale localStorage
+    if (saved?.email) {
+      fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'refresh', email: saved.email }),
+      })
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data?.user) {
+            const updated: UserData = {
+              id: data.user.id,
+              first_name: data.user.first_name,
+              email: data.user.email,
+              credits: data.user.credits,
+              plan: data.user.plan || 'free',
+              isAdmin: data.user.isAdmin || false,
+            }
+            persistUser(updated)
+            set({ user: updated })
+          }
+        })
+        .catch(() => {})
+    }
   },
   logout: () => {
     persistUser(null)

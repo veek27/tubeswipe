@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion, useAnimation } from 'framer-motion'
+import { motion, useAnimation, AnimatePresence } from 'framer-motion'
 import { useStore } from '@/store/useStore'
 import LandingSteps from '@/components/LandingSteps'
 import LandingWhy from '@/components/LandingWhy'
@@ -12,7 +12,7 @@ export default function Home() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const { setYoutubeUrl, setVideoInfo, setAnalysis, setLoading: setStoreLoading, user, hasMounted, setMounted } = useStore()
+  const { setYoutubeUrl, setVideoInfo, setAnalysis, setLoading: setStoreLoading, user, updateCredits, hasMounted, setMounted } = useStore()
 
   useEffect(() => {
     if (!hasMounted) setMounted()
@@ -22,10 +22,18 @@ export default function Home() {
     return /(?:youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9_-]{11}/.test(u)
   }
 
+  const [showNoCredits, setShowNoCredits] = useState(false)
+
   const handleAnalyze = async () => {
     setError('')
     if (!url.trim() || !isValidYoutubeUrl(url.trim())) {
       setError('Colle un lien YouTube valide pour continuer.')
+      return
+    }
+
+    // Block if logged in with insufficient credits
+    if (user && user.credits < 0.5) {
+      setShowNoCredits(true)
       return
     }
 
@@ -37,16 +45,24 @@ export default function Home() {
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ youtubeUrl: url.trim() }),
+        body: JSON.stringify({ youtubeUrl: url.trim(), userId: user?.id }),
       })
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
+        if (data.error === 'no_credits') {
+          setShowNoCredits(true)
+          setLoading(false)
+          setStoreLoading(false)
+          if (user) updateCredits(0)
+          return
+        }
         const errMsg = data.error || (res.status === 529 ? 'L\'IA est temporairement surchargée. Réessaie dans quelques secondes.' : `Erreur ${res.status} lors de l'analyse`)
         throw new Error(errMsg)
       }
 
       const data = await res.json()
+      if (data.credits !== undefined) updateCredits(data.credits)
       setVideoInfo(data.videoInfo)
       setAnalysis(data.analysis)
       setStoreLoading(false)
@@ -289,6 +305,52 @@ export default function Home() {
       <div className="relative z-10 w-full max-w-[900px]">
         <LandingWhy />
       </div>
+
+      {/* No Credits Modal */}
+      <AnimatePresence>
+        {showNoCredits && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center px-5 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowNoCredits(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-surface border border-border rounded-2xl p-8 w-full max-w-md shadow-2xl shadow-black/40 text-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto mb-5">
+                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#f59e0b" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+              </div>
+              <h3 className="font-display text-xl font-bold mb-2">Plus de crédits</h3>
+              <p className="text-text-muted text-sm mb-6">
+                Tu as utilisé ton crédit gratuit. Passe sur un forfait pour continuer à analyser des vidéos.
+              </p>
+              <button
+                onClick={() => router.push('/pricing')}
+                className="w-full bg-accent hover:bg-accent-hover text-white font-semibold px-6 py-3.5 rounded-xl text-sm transition-all flex items-center justify-center gap-2"
+              >
+                Voir les forfaits
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setShowNoCredits(false)}
+                className="mt-3 text-text-dim text-xs hover:text-text-muted transition-colors"
+              >
+                Fermer
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Login Modal */}
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}

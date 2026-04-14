@@ -44,7 +44,7 @@ type Tab = 'analyses' | 'profiles'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { user, logout, setAnalysis, setVideoInfo, setYoutubeUrl, setSavedAnalysisId, hasMounted, setMounted } = useStore()
+  const { user, logout, setAnalysis, setVideoInfo, setYoutubeUrl, setSavedAnalysisId, updateCredits, hasMounted, setMounted } = useStore()
   const [tab, setTab] = useState<Tab>('analyses')
   const [analyses, setAnalyses] = useState<AnalysisRecord[]>([])
   const [profiles, setProfiles] = useState<ProfileRecord[]>([])
@@ -76,10 +76,18 @@ export default function DashboardPage() {
     return /(?:youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9_-]{11}/.test(u)
   }
 
+  const [showNoCredits, setShowNoCredits] = useState(false)
+
   const handleNewAnalysis = async () => {
     setAnalyzeError('')
     if (!analyzeUrl.trim() || !isValidYoutubeUrl(analyzeUrl.trim())) {
       setAnalyzeError('Colle un lien YouTube valide.')
+      return
+    }
+
+    // Block if insufficient credits
+    if (!user || user.credits < 0.5) {
+      setShowNoCredits(true)
       return
     }
 
@@ -91,16 +99,24 @@ export default function DashboardPage() {
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ youtubeUrl: analyzeUrl.trim() }),
+        body: JSON.stringify({ youtubeUrl: analyzeUrl.trim(), userId: user?.id }),
       })
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
+        if (data.error === 'no_credits') {
+          setShowNoCredits(true)
+          setAnalyzing(false)
+          setStoreLoading(false)
+          if (user) updateCredits(0)
+          return
+        }
         const errMsg = data.error || (res.status === 529 ? 'L\'IA est temporairement surchargée. Réessaie dans quelques secondes.' : `Erreur ${res.status}`)
         throw new Error(errMsg)
       }
 
       const data = await res.json()
+      if (data.credits !== undefined) updateCredits(data.credits)
       setVideoInfo(data.videoInfo)
       setAnalysis(data.analysis)
       setStoreLoading(false)
@@ -676,7 +692,7 @@ export default function DashboardPage() {
                   </div>
                 ) : (() => {
                   const plan = user.plan || 'free'
-                  const visibleLimit = plan === 'free' ? 1 : plan === 'starter' ? 5 : Infinity
+                  const visibleLimit = plan === 'free' ? 1 : Infinity
                   const visibleAnalyses = analyses.slice(0, visibleLimit)
                   const lockedAnalyses = analyses.slice(visibleLimit)
 
@@ -833,15 +849,13 @@ export default function DashboardPage() {
                               </svg>
                             </div>
                             <p className="text-xs text-text-muted flex-1">
-                              {plan === 'free'
-                                ? 'Passe à Starter pour accéder à tout ton historique.'
-                                : `${lockedAnalyses.length} analyse${lockedAnalyses.length > 1 ? 's' : ''} masquée${lockedAnalyses.length > 1 ? 's' : ''}. Passe à Pro pour un historique illimité.`}
+                              Passe à Starter pour accéder à tout ton historique.
                             </p>
                             <button
                               onClick={() => router.push('/pricing')}
                               className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 flex-shrink-0"
                             >
-                              {plan === 'free' ? 'Passer Starter' : 'Passer Pro'}
+                              Passer Starter
                               <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                               </svg>
@@ -1045,30 +1059,8 @@ export default function DashboardPage() {
                   </motion.div>
                 ) : (() => {
                   const plan = user.plan || 'free'
-                  const maxProfiles = plan === 'free' ? 0 : plan === 'starter' ? 1 : Infinity
+                  const maxProfiles = plan === 'pro' ? Infinity : 1 // Free=1, Starter=1, Pro=unlimited
                   const canCreate = profiles.length < maxProfiles
-
-                  if (plan === 'free') {
-                    return (
-                      <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
-                          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" className="text-amber-400">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                          </svg>
-                        </div>
-                        <p className="text-xs text-text-muted flex-1">Les profils sont disponibles à partir du plan Starter.</p>
-                        <button
-                          onClick={() => router.push('/pricing')}
-                          className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 flex-shrink-0"
-                        >
-                          Starter
-                          <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                          </svg>
-                        </button>
-                      </div>
-                    )
-                  }
 
                   if (!canCreate) {
                     return (
@@ -1270,6 +1262,52 @@ export default function DashboardPage() {
                   ) : 'Modifier'}
                 </button>
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* No Credits Modal */}
+      <AnimatePresence>
+        {showNoCredits && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center px-5 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowNoCredits(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-surface border border-border rounded-2xl p-8 w-full max-w-md shadow-2xl shadow-black/40 text-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto mb-5">
+                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#f59e0b" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+              </div>
+              <h3 className="font-display text-xl font-bold mb-2">Plus de crédits</h3>
+              <p className="text-text-muted text-sm mb-6">
+                Tu as utilisé tous tes crédits. Passe sur un forfait supérieur pour continuer.
+              </p>
+              <button
+                onClick={() => router.push('/pricing')}
+                className="w-full bg-accent hover:bg-accent-hover text-white font-semibold px-6 py-3.5 rounded-xl text-sm transition-all flex items-center justify-center gap-2"
+              >
+                Voir les forfaits
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setShowNoCredits(false)}
+                className="mt-3 text-text-dim text-xs hover:text-text-muted transition-colors"
+              >
+                Fermer
+              </button>
             </motion.div>
           </motion.div>
         )}

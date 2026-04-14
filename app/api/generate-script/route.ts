@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
+import { CREDIT_COSTS } from '@/lib/plans'
 
 export const maxDuration = 60 // Allow up to 60s on Vercel
 
@@ -33,12 +34,12 @@ export async function POST(request: NextRequest) {
       .eq('id', userId)
       .single()
 
-    if (!user || user.credits <= 0) {
+    if (!user || user.credits < CREDIT_COSTS.script) {
       return NextResponse.json({ error: 'no_credits', message: 'Plus de crédits disponibles' }, { status: 403 })
     }
 
-    // Deduct credit immediately (non-blocking — log if fails due to RLS)
-    const newCredits = user.credits - 1
+    // Deduct 0.5 credit for script generation
+    const newCredits = Math.round((user.credits - CREDIT_COSTS.script) * 10) / 10
     const { data: updated, error: creditError } = await supabase
       .from('users')
       .update({ credits: newCredits })
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
     // Log transaction (best effort)
     await supabase.from('credit_transactions').insert({
       user_id: userId,
-      amount: -1,
+      amount: -CREDIT_COSTS.script,
       type: 'usage',
       description: 'Génération d\'un script',
     })
@@ -219,7 +220,7 @@ Description précise : texte sur la miniature, expression du visage, couleurs, c
         .eq('id', userId)
       await supabase.from('credit_transactions').insert({
         user_id: userId,
-        amount: 1,
+        amount: CREDIT_COSTS.script,
         type: 'refund',
         description: 'Remboursement — échec génération script',
       })

@@ -203,7 +203,7 @@ export default function NichePage() {
     }
 
     // Check credits before starting
-    if (!user || user.credits <= 0) {
+    if (!user || user.credits < 0.5) {
       setShowNoCredits(true)
       return
     }
@@ -685,17 +685,21 @@ export default function NichePage() {
             Retour
           </button>
 
-          {user?.plan !== 'free' && (
-          <button
-            onClick={() => setShowSaveModal(true)}
-            className="px-5 py-3 rounded-xl border border-accent/30 text-accent hover:bg-accent/10 text-sm font-medium transition-all flex items-center justify-center gap-2"
-          >
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-            </svg>
-            Sauvegarder ce profil
-          </button>
-          )}
+          {(() => {
+            const maxProfiles = user?.plan === 'pro' ? Infinity : 1
+            const canSave = profiles.length < maxProfiles
+            return canSave ? (
+              <button
+                onClick={() => setShowSaveModal(true)}
+                className="px-5 py-3 rounded-xl border border-accent/30 text-accent hover:bg-accent/10 text-sm font-medium transition-all flex items-center justify-center gap-2"
+              >
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
+                Sauvegarder ce profil
+              </button>
+            ) : null
+          })()}
 
           <button
             onClick={handleGenerate}

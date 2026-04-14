@@ -14,9 +14,9 @@ const plans = [
     period: '',
     credits: 1,
     features: [
-      '1 analyse complète',
-      '1 script généré',
-      'Saisie libre de ta niche',
+      '1 analyse + 1 script',
+      '1 profil sauvegardé',
+      'Dernière analyse visible uniquement',
     ],
     cta: null,
     popular: false,
@@ -28,10 +28,9 @@ const plans = [
     period: '/mois',
     credits: 10,
     features: [
-      '10 analyses + 10 scripts par mois',
-      '1 profil sauvegardé (modifiable)',
-      'Script généré via ton profil',
-      'Historique des 5 dernières analyses',
+      '10 crédits / mois (0.5 par action)',
+      '1 profil sauvegardé',
+      'Historique complet illimité',
       'Export de scripts',
     ],
     cta: 'Passer à Starter',
@@ -44,14 +43,12 @@ const plans = [
     period: '/mois',
     credits: 35,
     features: [
-      '35 analyses + 35 scripts par mois',
-      'Tout le plan Starter inclus',
-      'Profils multiples (plusieurs niches)',
-      'Saisie libre ou sélection de profil',
+      '35 crédits / mois (0.5 par action)',
+      'Profils illimités (plusieurs niches)',
       'Connexion chaîne YouTube',
       'Scripts enrichis par ta chaîne',
       'Historique complet illimité',
-      'Accès prioritaire aux nouvelles features',
+      'Export de scripts',
       'Support prioritaire',
     ],
     cta: 'Passer à Pro',
@@ -248,7 +245,7 @@ export default function PricingPage() {
           className="mt-10 text-center"
         >
           <p className="text-text-dim text-xs leading-relaxed">
-            1 crédit = 1 analyse complète + 1 script personnalisé adapté à ta niche.
+            0.5 crédit par analyse + 0.5 crédit par script. 1 crédit = 1 analyse + 1 script.
             <br />
             Les crédits se renouvellent chaque mois. Annulable à tout moment. Sans engagement.
           </p>

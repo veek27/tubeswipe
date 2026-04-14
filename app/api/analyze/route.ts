@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createClient } from '@supabase/supabase-js'
+import { CREDIT_COSTS } from '@/lib/plans'
 
 export const maxDuration = 60 // Allow up to 60s for retries on Vercel
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 })
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 function extractVideoId(url: string): string | null {
   const match = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
@@ -53,7 +60,7 @@ async function fetchYouTubeData(videoId: string) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { youtubeUrl } = await request.json()
+    const { youtubeUrl, userId } = await request.json()
 
     if (!youtubeUrl) {
       return NextResponse.json({ error: 'URL YouTube requise' }, { status: 400 })
@@ -62,6 +69,38 @@ export async function POST(request: NextRequest) {
     const videoId = extractVideoId(youtubeUrl)
     if (!videoId) {
       return NextResponse.json({ error: 'URL YouTube invalide' }, { status: 400 })
+    }
+
+    // ── Deduct 0.5 credit for analysis ──
+    if (userId) {
+      const { data: user } = await supabase
+        .from('users')
+        .select('credits')
+        .eq('id', userId)
+        .single()
+
+      if (!user || user.credits < CREDIT_COSTS.analysis) {
+        return NextResponse.json({ error: 'no_credits', message: 'Plus de crédits disponibles' }, { status: 403 })
+      }
+
+      const newCredits = Math.round((user.credits - CREDIT_COSTS.analysis) * 10) / 10
+      const { data: updated } = await supabase
+        .from('users')
+        .update({ credits: newCredits })
+        .eq('id', userId)
+        .select('credits')
+        .maybeSingle()
+
+      if (!updated) {
+        console.error('Analysis credit deduction failed for user:', userId)
+      }
+
+      await supabase.from('credit_transactions').insert({
+        user_id: userId,
+        amount: -CREDIT_COSTS.analysis,
+        type: 'usage',
+        description: 'Analyse d\'une vidéo',
+      })
     }
 
     // 1. Fetch YouTube data
@@ -194,7 +233,14 @@ Réponds avec ce JSON exact :
     }
     analysis = stripCitations(analysis)
 
-    return NextResponse.json({ videoInfo, analysis })
+    // Read back current credits for response
+    let currentCredits: number | undefined
+    if (userId) {
+      const { data: u } = await supabase.from('users').select('credits').eq('id', userId).single()
+      currentCredits = u?.credits
+    }
+
+    return NextResponse.json({ videoInfo, analysis, credits: currentCredits })
   } catch (error: unknown) {
     console.error('Analyze error:', error)
     const message = error instanceof Error ? error.message : 'Erreur interne'
