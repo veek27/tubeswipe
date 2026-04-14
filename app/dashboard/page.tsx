@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '@/store/useStore'
@@ -71,6 +71,8 @@ export default function DashboardPage() {
   const [analyzeUrl, setAnalyzeUrl] = useState('')
   const [analyzeError, setAnalyzeError] = useState('')
   const [analyzing, setAnalyzing] = useState(false)
+  const [highlightInput, setHighlightInput] = useState(false)
+  const analyzeInputRef = useRef<HTMLInputElement>(null)
 
   const isValidYoutubeUrl = (u: string) => {
     return /(?:youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9_-]{11}/.test(u)
@@ -553,13 +555,14 @@ export default function DashboardPage() {
           <p className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3 ml-1">Nouvelle analyse</p>
           <div style={{ display: 'flex', flexDirection: 'row', gap: '8px' }}>
             <input
+              ref={analyzeInputRef}
               type="text"
               value={analyzeUrl}
               onChange={(e) => { setAnalyzeUrl(e.target.value); setAnalyzeError('') }}
               onKeyDown={(e) => e.key === 'Enter' && !analyzing && handleNewAnalysis()}
               placeholder="Colle un lien YouTube ici..."
               style={{ flex: '1 1 0%', minWidth: 0 }}
-              className="bg-surface-2 border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-dim font-mono transition-all"
+              className={`bg-surface-2 border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-dim font-mono transition-all duration-500 ${highlightInput ? 'border-accent ring-2 ring-accent/40 shadow-lg shadow-accent/20' : 'border-border'}`}
               disabled={analyzing}
             />
             <button
@@ -684,7 +687,14 @@ export default function DashboardPage() {
                     <p className="text-text-dim text-sm mb-1">Aucune analyse pour le moment</p>
                     <p className="text-text-dim text-xs mb-4">Lance ta première analyse pour commencer.</p>
                     <button
-                      onClick={() => router.push('/')}
+                      onClick={() => {
+                        analyzeInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                        setTimeout(() => {
+                          analyzeInputRef.current?.focus()
+                          setHighlightInput(true)
+                          setTimeout(() => setHighlightInput(false), 2000)
+                        }, 400)
+                      }}
                       className="bg-accent hover:bg-accent-hover text-white font-semibold px-5 py-2.5 rounded-xl text-xs transition-all"
                     >
                       Analyser une vidéo
