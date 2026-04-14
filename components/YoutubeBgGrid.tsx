@@ -52,7 +52,7 @@ function Thumb({ id, index }: { id: string; index: number }) {
 
 export default function YoutubeBgGrid() {
   return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
+    <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0, filter: 'blur(6px)' }}>
       {/* YouTube top bar */}
       <div className="absolute top-0 left-0 right-0 h-12 flex items-center px-5 gap-4 border-b border-white/5" style={{ backgroundColor: 'rgba(15,15,15,0.95)' }}>
         <div className="flex flex-col gap-[3px]">
