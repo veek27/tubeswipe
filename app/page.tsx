@@ -118,13 +118,14 @@ export default function Home() {
       {/* YouTube thumbnails background */}
       <YoutubeBgGrid />
 
-      {/* Subtle red glows on dark sections */}
+      {/* Red glows on dark sections */}
       <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
-        <div className="absolute top-[120vh] left-[-10%] w-[500px] h-[500px] rounded-full opacity-[0.03]" style={{ background: 'radial-gradient(circle, #E40000 0%, transparent 70%)' }} />
-        <div className="absolute top-[160vh] right-[-5%] w-[400px] h-[400px] rounded-full opacity-[0.025]" style={{ background: 'radial-gradient(circle, #E40000 0%, transparent 70%)' }} />
-        <div className="absolute top-[220vh] left-[20%] w-[600px] h-[600px] rounded-full opacity-[0.02]" style={{ background: 'radial-gradient(circle, #E40000 0%, transparent 70%)' }} />
-        <div className="absolute top-[300vh] right-[10%] w-[450px] h-[450px] rounded-full opacity-[0.03]" style={{ background: 'radial-gradient(circle, #E40000 0%, transparent 70%)' }} />
-        <div className="absolute top-[370vh] left-[-5%] w-[350px] h-[350px] rounded-full opacity-[0.025]" style={{ background: 'radial-gradient(circle, #E40000 0%, transparent 70%)' }} />
+        <div className="absolute top-[120vh] left-[-10%] w-[600px] h-[600px] rounded-full opacity-[0.09]" style={{ background: 'radial-gradient(circle, #E40000 0%, transparent 70%)' }} />
+        <div className="absolute top-[160vh] right-[-5%] w-[500px] h-[500px] rounded-full opacity-[0.07]" style={{ background: 'radial-gradient(circle, #E40000 0%, transparent 70%)' }} />
+        <div className="absolute top-[220vh] left-[15%] w-[700px] h-[700px] rounded-full opacity-[0.06]" style={{ background: 'radial-gradient(circle, #E40000 0%, transparent 70%)' }} />
+        <div className="absolute top-[280vh] right-[5%] w-[550px] h-[550px] rounded-full opacity-[0.08]" style={{ background: 'radial-gradient(circle, #E40000 0%, transparent 70%)' }} />
+        <div className="absolute top-[350vh] left-[-5%] w-[500px] h-[500px] rounded-full opacity-[0.07]" style={{ background: 'radial-gradient(circle, #E40000 0%, transparent 70%)' }} />
+        <div className="absolute top-[400vh] right-[20%] w-[450px] h-[450px] rounded-full opacity-[0.06]" style={{ background: 'radial-gradient(circle, #E40000 0%, transparent 70%)' }} />
       </div>
 
       {/* Top nav bar — fixed */}
