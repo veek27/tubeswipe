@@ -118,6 +118,15 @@ export default function Home() {
       {/* YouTube thumbnails background */}
       <YoutubeBgGrid />
 
+      {/* Subtle red glows on dark sections */}
+      <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
+        <div className="absolute top-[120vh] left-[-10%] w-[500px] h-[500px] rounded-full opacity-[0.03]" style={{ background: 'radial-gradient(circle, #E40000 0%, transparent 70%)' }} />
+        <div className="absolute top-[160vh] right-[-5%] w-[400px] h-[400px] rounded-full opacity-[0.025]" style={{ background: 'radial-gradient(circle, #E40000 0%, transparent 70%)' }} />
+        <div className="absolute top-[220vh] left-[20%] w-[600px] h-[600px] rounded-full opacity-[0.02]" style={{ background: 'radial-gradient(circle, #E40000 0%, transparent 70%)' }} />
+        <div className="absolute top-[300vh] right-[10%] w-[450px] h-[450px] rounded-full opacity-[0.03]" style={{ background: 'radial-gradient(circle, #E40000 0%, transparent 70%)' }} />
+        <div className="absolute top-[370vh] left-[-5%] w-[350px] h-[350px] rounded-full opacity-[0.025]" style={{ background: 'radial-gradient(circle, #E40000 0%, transparent 70%)' }} />
+      </div>
+
       {/* Top nav bar — fixed */}
       <div className="fixed top-0 left-0 right-0 z-50 px-5 py-4">
         <div className="max-w-[900px] mx-auto flex items-center justify-between">
