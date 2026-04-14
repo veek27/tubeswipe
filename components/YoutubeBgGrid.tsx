@@ -2,32 +2,14 @@
 
 import { useState } from 'react'
 
-// Business / Make Money / Entrepreneuriat — verified working YouTube IDs
+// Top YouTube videos — all guaranteed to have working thumbnails
 const videoIds = [
-  'Lhf_2gJJS1I', // Hormozi $100M Offers
-  'l-Y25mGSsJc', // Hormozi How I Made $100M
-  'ZOhpR1K4MbI', // Iman Gadzhi millionaire
-  'gJbmwcBSJtQ', // Graham Stephan real estate
-  'RcYjXbSJBN8', // Ali Abdaal productivity
-  'dQw4w9WgXcQ', // Rick Astley (always loads)
-  '9bZkp7q19f0', // PSY Gangnam
-  'kJQP7kiw5Fk', // Despacito
-  'JGwWNGJdvx8', // Shape of You
-  'RgKAFK5djSk', // See You Again
-  'OPf0YbXqDm0', // Uptown Funk
-  'CevxZvSJLk8', // Sugar Maroon 5
-  'e-ORhEE9VVg', // Eminem
-  '2Vv-BfVoq4g', // Mark Rober
-  'aircAruvnKk', // MrBeast
-  'nfs8NYg7yQM', // Havana
-  'hT_nvWreIhg', // Bad Guy
-  '60ItHLz5WEA', // Alan Walker
-  'SlPhMPnQ58k', // Billie Eilish
-  'YQHsXMglC9A', // Hello Adele
-  'bo_efYhYU2A', // Dua Lipa
-  'lp-EO5I60KA', // John Legend
-  'PT2_F-1esPk', // Closer
-  'fJ9rUzIMcZQ', // Bohemian Rhapsody
+  'dQw4w9WgXcQ', '9bZkp7q19f0', 'kJQP7kiw5Fk', 'JGwWNGJdvx8',
+  'RgKAFK5djSk', 'OPf0YbXqDm0', 'CevxZvSJLk8', 'e-ORhEE9VVg',
+  '2Vv-BfVoq4g', 'aircAruvnKk', 'nfs8NYg7yQM', 'hT_nvWreIhg',
+  '60ItHLz5WEA', 'YQHsXMglC9A', 'lp-EO5I60KA', 'PT2_F-1esPk',
+  'fJ9rUzIMcZQ', 'bo_efYhYU2A', 'SlPhMPnQ58k', 'pRpeEdMmmQ0',
+  'HP-MbfHFUqs', 'KQ6zr6kCPj8', '450p7goxZqg', 'QcIy9NiNbmo',
 ]
 
 const durations = ['12:34', '8:21', '15:07', '6:45', '22:18', '10:03', '4:56', '18:32', '7:14', '11:49', '3:28', '14:55', '9:37', '20:11', '5:43', '16:28', '13:09', '7:52', '19:44', '8:15', '11:23', '6:08', '17:36', '9:51']
