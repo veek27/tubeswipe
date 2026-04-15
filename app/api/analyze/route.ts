@@ -157,7 +157,11 @@ async function fetchChannelOutliers(channelId: string, currentVideoId: string, c
       ? Math.round((currentVPD / channelAvgViewsPerDay) * 10) / 10
       : 0
 
-    const isOutlier = multiplier >= 2
+    // A video is only an outlier if:
+    // 1. Multiplier >= 2x (performs 2x better than avg)
+    // 2. The video has at least 500 views (avoid noise on tiny channels)
+    // 3. The channel avg is at least 10 views/day (avoid meaningless comparisons)
+    const isOutlier = multiplier >= 2 && currentViews >= 500 && channelAvgViewsPerDay >= 10
 
     // 5. Find outlier videos (time-normalized), sorted by multiplier
     const allWithMultiplier: ChannelVideo[] = statsData.items
@@ -184,7 +188,7 @@ async function fetchChannelOutliers(channelId: string, currentVideoId: string, c
           url: `https://www.youtube.com/watch?v=${v.id}`,
         }
       })
-      .filter((v: ChannelVideo) => v.multiplier >= 1.5)
+      .filter((v: ChannelVideo) => v.multiplier >= 1.5 && v.views >= 200)
       .sort((a: ChannelVideo, b: ChannelVideo) => b.multiplier - a.multiplier)
       .slice(0, 5)
 
