@@ -24,6 +24,11 @@ interface Analysis {
     explication: string
     suggestion: string
   }
+  potentiel_sujet?: {
+    score: string
+    explication: string
+    meilleur_angle: string
+  }
   conseil_final?: string
   // Legacy fields
   pourquoi?: {

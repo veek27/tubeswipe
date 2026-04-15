@@ -116,7 +116,8 @@ export default function AnalyzePage() {
   const pointsFaibles = analysis.points_faibles || analysis.analyse_contenu?.axes_amelioration || []
   const verdict = analysis.verdict || (isOutlier ? 'BON' : 'MOYEN')
   const verdictExplication = analysis.verdict_explication || analysis.analyse_contenu?.sujet_attire || ''
-  const adaptabilite = analysis.adaptabilite || null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const potentielSujet: any = analysis.potentiel_sujet || analysis.adaptabilite || null
   const conseilFinal = analysis.conseil_final || analysis.tendances?.conseil || ''
 
   const ageLabel = currentDaysOld < 30 ? `${currentDaysOld}j` : currentDaysOld < 365 ? `${Math.round(currentDaysOld / 30)} mois` : `${Math.round(currentDaysOld / 365 * 10) / 10} ans`
@@ -281,26 +282,27 @@ export default function AnalyzePage() {
         {/* === BOTTOM ROW: Adaptabilité + Conseil === */}
         <motion.div {...fadeUp} transition={{ duration: 0.4, delay: 0.2 }} className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
 
-          {/* Adaptabilité */}
-          {adaptabilite && (
+          {/* Potentiel du sujet */}
+          {potentielSujet && (
             <div className="bg-surface border border-border rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-6 h-6 rounded-md bg-purple-500/15 flex items-center justify-center">
-                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#a855f7" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#a855f7" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
                 </div>
-                <p className="text-xs font-bold text-purple-400 uppercase tracking-wider">Adaptabilité</p>
+                <p className="text-xs font-bold text-purple-400 uppercase tracking-wider">Potentiel du sujet</p>
                 <span className={`ml-auto px-2 py-0.5 rounded text-[10px] font-bold ${
-                  adaptabilite.score === 'FORT' ? 'bg-emerald-500/15 text-emerald-400' :
-                  adaptabilite.score === 'MOYEN' ? 'bg-amber-500/15 text-amber-400' :
+                  potentielSujet.score === 'FORT' ? 'bg-emerald-500/15 text-emerald-400' :
+                  potentielSujet.score === 'MOYEN' ? 'bg-amber-500/15 text-amber-400' :
                   'bg-red-500/15 text-red-400'
-                }`}>{adaptabilite.score}</span>
+                }`}>{potentielSujet.score}</span>
               </div>
-              <p className="text-xs text-text-muted leading-relaxed mb-3">{adaptabilite.explication}</p>
-              <div className="bg-surface-2 border border-border rounded-lg p-3">
-                <p className="text-xs text-text-primary leading-relaxed">
-                  <span className="font-bold text-accent">💡</span> {adaptabilite.suggestion}
-                </p>
-              </div>
+              <p className="text-xs text-text-muted leading-relaxed mb-3">{potentielSujet.explication}</p>
+              {potentielSujet.meilleur_angle && (
+                <div className="bg-surface-2 border border-border rounded-lg p-3">
+                  <p className="text-[10px] text-text-dim uppercase font-bold mb-1">Meilleur angle possible</p>
+                  <p className="text-xs text-text-primary leading-relaxed font-semibold">{potentielSujet.meilleur_angle}</p>
+                </div>
+              )}
             </div>
           )}
 

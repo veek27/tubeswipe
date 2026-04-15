@@ -286,8 +286,8 @@ Réponds avec ce JSON exact :
 {
   "sujet": "Le sujet principal en une phrase courte",
   "angle": "L'angle ou la promesse spécifique utilisée",
-  "verdict": "EXCELLENT ou BON ou MOYEN ou FAIBLE — ton verdict honnête sur le potentiel de ce sujet pour être adapté dans une autre niche",
-  "verdict_explication": "2-3 phrases HONNÊTES expliquant pourquoi ce verdict. Si la vidéo a peu de vues, mentionne-le. Si le sujet est saturé, dis-le. Sois direct et utile.",
+  "verdict": "EXCELLENT ou BON ou MOYEN ou FAIBLE — ton verdict honnête sur la QUALITÉ DU SUJET (pas la vidéo elle-même). Est-ce un sujet porteur, intéressant, qui touche un vrai besoin/curiosité ?",
+  "verdict_explication": "2-3 phrases HONNÊTES sur le sujet. Pourquoi ce sujet est bon ou pas. Est-il universel ? Répond-il à un vrai problème ? Y a-t-il de la demande ? Si le sujet est bateau ou saturé, dis-le. Sois direct.",
   "mots_cles": ["mot1", "mot2", "mot3", "mot4", "mot5"],
   "plan": [
     {"partie": "Hook", "description": "Ce que fait le hook — est-il efficace ou pas ?"},
@@ -296,14 +296,14 @@ Réponds avec ce JSON exact :
     {"partie": "Partie 3 - [Titre]", "description": "Ce qui est couvert"},
     {"partie": "Conclusion", "description": "Comment ça se termine"}
   ],
-  "points_forts": ["Un vrai point fort", "Un autre point fort"],
-  "points_faibles": ["Un vrai point faible ou axe d'amélioration", "Un autre"],
-  "adaptabilite": {
+  "points_forts": ["Un vrai point fort du SUJET ou de l'ANGLE choisi", "Un autre"],
+  "points_faibles": ["Un vrai point faible du SUJET ou de l'EXÉCUTION", "Un autre"],
+  "potentiel_sujet": {
     "score": "FORT ou MOYEN ou FAIBLE",
-    "explication": "Est-ce que ce sujet/angle peut facilement être adapté à d'autres niches ? Pourquoi ?",
-    "suggestion": "Suggestion concrète : comment adapter ce sujet à une autre niche (exemple concret)"
+    "explication": "Le sujet a-t-il du potentiel ? Est-ce que des gens cherchent ça ? Est-ce qu'il touche une émotion, un désir, une frustration universelle ? Sois concret.",
+    "meilleur_angle": "Si tu devais refaire cette vidéo pour maximiser les vues, quel angle prendrais-tu ? Donne un titre concret."
   },
-  "conseil_final": "Un conseil direct et honnête pour l'utilisateur. Si la vidéo n'est pas un bon choix, dis-lui clairement de chercher une meilleure vidéo sur cette chaîne ou un meilleur sujet. Sois utile, pas poli."
+  "conseil_final": "Un conseil direct et honnête. Si la vidéo/le sujet n'est pas un bon choix, dis-le clairement et suggère de regarder les outliers de la chaîne. Si c'est bon, dis pourquoi et encourage à passer à l'étape suivante."
 }`
 
     // Retry with short waits (must stay within 60s Vercel timeout)
