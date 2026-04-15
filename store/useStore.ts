@@ -14,11 +14,18 @@ interface Analysis {
   angle: string
   mots_cles: string[]
   plan: { partie: string; description: string }[]
-  pourquoi: {
+  pourquoi?: {
     sujet_attire: string
     hook_fonctionne: string
     structure_retient: string
     elements_cles: string[]
+  }
+  analyse_contenu?: {
+    sujet_attire: string
+    hook_analyse: string
+    structure_analyse: string
+    points_forts: string[]
+    axes_amelioration: string[]
   }
   tendances: {
     score: 'HOT' | 'WARM' | 'EVERGREEN'
@@ -26,6 +33,24 @@ interface Analysis {
     opportunite: string
     conseil: string
   }
+}
+
+export interface OutlierVideo {
+  videoId: string
+  title: string
+  thumbnail: string
+  views: number
+  viewsFormatted: string
+  publishedAt: string
+  multiplier: number
+  url: string
+}
+
+export interface OutlierData {
+  channelAvgViews: number
+  multiplier: number
+  isOutlier: boolean
+  outlierVideos: OutlierVideo[]
 }
 
 interface NicheData {
@@ -66,6 +91,7 @@ interface AppState {
   youtubeUrl: string
   videoInfo: VideoInfo | null
   analysis: Analysis | null
+  outlierData: OutlierData | null
   nicheData: NicheData | null
   script: string | null
   savedAnalysisId: string | null
@@ -77,6 +103,7 @@ interface AppState {
   setYoutubeUrl: (url: string) => void
   setVideoInfo: (info: VideoInfo) => void
   setAnalysis: (analysis: Analysis) => void
+  setOutlierData: (data: OutlierData | null) => void
   setNicheData: (data: NicheData) => void
   setScript: (script: string) => void
   setSavedAnalysisId: (id: string | null) => void
@@ -93,6 +120,7 @@ export const useStore = create<AppState>((set) => ({
   youtubeUrl: '',
   videoInfo: null,
   analysis: null,
+  outlierData: null,
   nicheData: null,
   script: null,
   savedAnalysisId: null,
@@ -104,6 +132,7 @@ export const useStore = create<AppState>((set) => ({
   setYoutubeUrl: (url) => set({ youtubeUrl: url }),
   setVideoInfo: (info) => set({ videoInfo: info }),
   setAnalysis: (analysis) => set({ analysis }),
+  setOutlierData: (data) => set({ outlierData: data }),
   setNicheData: (data) => set({ nicheData: data }),
   setScript: (script) => set({ script }),
   setSavedAnalysisId: (id) => set({ savedAnalysisId: id }),
@@ -182,6 +211,7 @@ export const useStore = create<AppState>((set) => ({
     youtubeUrl: '',
     videoInfo: null,
     analysis: null,
+    outlierData: null,
     nicheData: null,
     script: null,
     savedAnalysisId: null,

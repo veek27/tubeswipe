@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { useStore } from '@/store/useStore'
+import { useStore, OutlierData, OutlierVideo } from '@/store/useStore'
 import { useEffect, useState, useRef } from 'react'
 import EmailGate from '@/components/EmailGate'
 import AppNav from '@/components/AppNav'
@@ -12,9 +12,68 @@ const fadeUp = {
   animate: { opacity: 1, y: 0 },
 }
 
+function MultiplierBadge({ multiplier, isOutlier }: { multiplier: number; isOutlier: boolean }) {
+  if (multiplier <= 0) return null
+
+  const getColor = () => {
+    if (multiplier >= 5) return { bg: 'bg-emerald-500/15', border: 'border-emerald-500/30', text: 'text-emerald-400', glow: 'shadow-emerald-500/20' }
+    if (multiplier >= 2) return { bg: 'bg-amber-500/15', border: 'border-amber-500/30', text: 'text-amber-400', glow: 'shadow-amber-500/20' }
+    return { bg: 'bg-zinc-500/10', border: 'border-zinc-500/30', text: 'text-zinc-400', glow: '' }
+  }
+
+  const color = getColor()
+  const label = isOutlier ? 'Outlier' : 'Standard'
+
+  return (
+    <div className={`inline-flex items-center gap-2.5 px-4 py-2 rounded-xl ${color.bg} border ${color.border} ${color.glow ? `shadow-lg ${color.glow}` : ''}`}>
+      <span className={`text-2xl font-black font-mono ${color.text}`}>{multiplier}x</span>
+      <div className="flex flex-col">
+        <span className={`text-[10px] font-bold uppercase tracking-wider ${color.text}`}>{label}</span>
+        <span className="text-[10px] text-text-dim">vs moyenne chaîne</span>
+      </div>
+    </div>
+  )
+}
+
+function OutlierCard({ video, onAnalyze }: { video: OutlierVideo; onAnalyze: (url: string) => void }) {
+  return (
+    <div className="bg-surface-2 border border-border rounded-xl overflow-hidden group hover:border-accent/30 transition-all">
+      <div className="relative">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={video.thumbnail}
+          alt={video.title}
+          className="w-full aspect-video object-cover"
+        />
+        <div className="absolute top-2 right-2">
+          <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+            video.multiplier >= 5 ? 'bg-emerald-500/90 text-white' :
+            video.multiplier >= 2 ? 'bg-amber-500/90 text-white' :
+            'bg-zinc-600/90 text-white'
+          }`}>
+            {video.multiplier}x
+          </span>
+        </div>
+      </div>
+      <div className="p-3">
+        <p className="text-xs font-semibold leading-snug mb-2 line-clamp-2">{video.title}</p>
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] text-text-dim">{video.viewsFormatted} vues</span>
+          <button
+            onClick={() => onAnalyze(video.url)}
+            className="text-[10px] font-semibold text-accent hover:text-accent-hover transition-colors"
+          >
+            Analyser
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function AnalyzePage() {
   const router = useRouter()
-  const { videoInfo, analysis, youtubeUrl, user, setSavedAnalysisId, hasMounted, setMounted } = useStore()
+  const { videoInfo, analysis, outlierData, youtubeUrl, user, setSavedAnalysisId, setYoutubeUrl, hasMounted, setMounted } = useStore()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const savedRef = useRef(false)
 
@@ -26,11 +85,8 @@ export default function AnalyzePage() {
     if (!analysis) router.replace('/')
   }, [analysis, router])
 
-  // Check if user is already logged in
   useEffect(() => {
-    if (user) {
-      setIsAuthenticated(true)
-    }
+    if (user) setIsAuthenticated(true)
   }, [user])
 
   // Save analysis to Supabase when authenticated
@@ -40,18 +96,11 @@ export default function AnalyzePage() {
       fetch('/api/save-analysis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user.id,
-          youtubeUrl,
-          videoInfo,
-          analysis,
-        }),
+        body: JSON.stringify({ userId: user.id, youtubeUrl, videoInfo, analysis }),
       })
         .then(res => res.json())
         .then(data => {
-          if (data.analysis?.id) {
-            setSavedAnalysisId(data.analysis.id)
-          }
+          if (data.analysis?.id) setSavedAnalysisId(data.analysis.id)
         })
         .catch(console.error)
     }
@@ -61,11 +110,15 @@ export default function AnalyzePage() {
 
   const handleAuthenticated = (userId: string) => {
     setIsAuthenticated(true)
-    // Analysis will be saved via the useEffect above
     void userId
   }
 
-  const trendColors = {
+  const handleAnalyzeOutlier = (url: string) => {
+    setYoutubeUrl(url)
+    router.push('/dashboard')
+  }
+
+  const trendColors: Record<string, { bg: string; border: string; text: string; label: string }> = {
     HOT: { bg: 'bg-red-500/10', border: 'border-red-500/30', text: 'text-red-400', label: 'HOT' },
     WARM: { bg: 'bg-amber-500/10', border: 'border-amber-500/30', text: 'text-amber-400', label: 'WARM' },
     EVERGREEN: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', text: 'text-emerald-400', label: 'EVERGREEN' },
@@ -73,10 +126,30 @@ export default function AnalyzePage() {
 
   const trend = trendColors[analysis.tendances?.score] || trendColors.WARM
 
+  // Use new analyse_contenu if available, fallback to old pourquoi
+  const contenu = analysis.analyse_contenu || (analysis.pourquoi ? {
+    sujet_attire: analysis.pourquoi.sujet_attire,
+    hook_analyse: analysis.pourquoi.hook_fonctionne,
+    structure_analyse: analysis.pourquoi.structure_retient,
+    points_forts: analysis.pourquoi.elements_cles,
+    axes_amelioration: [],
+  } : null)
+
+  const multiplier = outlierData?.multiplier || 0
+  const isOutlier = outlierData?.isOutlier || false
+  const channelAvg = outlierData?.channelAvgViews || 0
+  const outlierVideos = outlierData?.outlierVideos || []
+
+  // Dynamic section title based on outlier status
+  const performanceTitle = isOutlier
+    ? 'Pourquoi cette vidéo surperforme'
+    : multiplier > 0 && multiplier < 1
+      ? 'Analyse du contenu'
+      : 'Ce qui rend cette vidéo intéressante'
+
   return (
     <div className="min-h-screen px-5 py-10">
       <AppNav />
-      {/* Email Gate */}
       {!isAuthenticated && <EmailGate onAuthenticated={handleAuthenticated} />}
 
       <div className={`max-w-page mx-auto pt-12 transition-all duration-500 ${!isAuthenticated ? 'blur-sm pointer-events-none select-none' : ''}`}>
@@ -102,12 +175,13 @@ export default function AnalyzePage() {
         {/* Grid layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
-          {/* Bloc 1 — La vidéo (sidebar) */}
+          {/* Sidebar — Video + Outlier Score */}
           <motion.div
             {...fadeUp}
             transition={{ duration: 0.4, delay: 0.1 }}
-            className="lg:col-span-1"
+            className="lg:col-span-1 space-y-5"
           >
+            {/* Video card */}
             <div className="bg-surface border border-border rounded-2xl overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -139,12 +213,56 @@ export default function AnalyzePage() {
                 </div>
               </div>
             </div>
+
+            {/* Outlier Score Card */}
+            {multiplier > 0 && (
+              <div className="bg-surface border border-border rounded-2xl p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#a855f7" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                  </div>
+                  <h2 className="font-display font-bold text-sm">Score Outlier</h2>
+                </div>
+
+                <MultiplierBadge multiplier={multiplier} isOutlier={isOutlier} />
+
+                <div className="mt-4 space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-text-dim">Moyenne chaîne</span>
+                    <span className="text-text-muted font-mono">{channelAvg.toLocaleString('fr-FR')} vues</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-text-dim">Cette vidéo</span>
+                    <span className="text-text-primary font-mono font-semibold">{videoInfo.views} vues</span>
+                  </div>
+
+                  {/* Visual bar */}
+                  <div className="mt-3 relative h-2 bg-surface-2 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-1000 ${
+                        isOutlier ? 'bg-gradient-to-r from-amber-500 to-emerald-500' : 'bg-zinc-500'
+                      }`}
+                      style={{ width: `${Math.min(multiplier / 10 * 100, 100)}%` }}
+                    />
+                  </div>
+
+                  <p className="text-[10px] text-text-dim mt-2">
+                    {isOutlier
+                      ? `Cette vidéo fait ${multiplier}x la moyenne — c'est une vraie outlier, un sujet qui a clairement touché l'audience.`
+                      : multiplier >= 1
+                        ? `Performance dans la moyenne de la chaîne. Le sujet n'est pas un outlier mais reste analysable.`
+                        : `Cette vidéo performe en dessous de la moyenne. Regarde les suggestions ci-dessous pour des sujets plus porteurs.`
+                    }
+                  </p>
+                </div>
+              </div>
+            )}
           </motion.div>
 
           {/* Main content */}
           <div className="lg:col-span-2 space-y-5">
 
-            {/* Bloc 2 — Sujet & Plan */}
+            {/* Bloc — Sujet & Plan */}
             <motion.div
               {...fadeUp}
               transition={{ duration: 0.4, delay: 0.15 }}
@@ -157,13 +275,11 @@ export default function AnalyzePage() {
                 <h2 className="font-display font-bold text-lg">Sujet & Structure</h2>
               </div>
 
-              {/* Sujet */}
               <div className="mb-5">
                 <p className="text-xl font-bold mb-2">{analysis.sujet}</p>
                 <p className="text-text-muted text-sm font-mono">{analysis.angle}</p>
               </div>
 
-              {/* Mots-clés */}
               <div className="flex flex-wrap gap-2 mb-6">
                 {analysis.mots_cles?.map((kw: string, i: number) => (
                   <span key={i} className="px-3 py-1 rounded-full bg-accent/10 border border-accent/20 text-accent text-xs font-medium">
@@ -172,7 +288,6 @@ export default function AnalyzePage() {
                 ))}
               </div>
 
-              {/* Plan */}
               <div className="space-y-3">
                 <p className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3">Plan reconstruit</p>
                 {analysis.plan?.map((p: { partie: string; description: string }, i: number) => (
@@ -189,63 +304,81 @@ export default function AnalyzePage() {
               </div>
             </motion.div>
 
-            {/* Bloc 3 — Pourquoi ça fonctionne */}
-            <motion.div
-              {...fadeUp}
-              transition={{ duration: 0.4, delay: 0.2 }}
-              className="bg-surface border border-border rounded-2xl p-6"
-            >
-              <div className="flex items-center gap-2 mb-5">
-                <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#f59e0b" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                </div>
-                <h2 className="font-display font-bold text-lg">Pourquoi cette vidéo a fonctionné</h2>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
-                {/* Sujet */}
-                <div className="bg-surface-2 border border-border rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#E40000" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" /></svg>
-                    <p className="text-xs font-bold text-accent uppercase">Le sujet</p>
+            {/* Bloc — Analyse du contenu */}
+            {contenu && (
+              <motion.div
+                {...fadeUp}
+                transition={{ duration: 0.4, delay: 0.2 }}
+                className="bg-surface border border-border rounded-2xl p-6"
+              >
+                <div className="flex items-center gap-2 mb-5">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#f59e0b" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                   </div>
-                  <p className="text-xs text-text-muted leading-relaxed">{analysis.pourquoi?.sujet_attire}</p>
+                  <h2 className="font-display font-bold text-lg">{performanceTitle}</h2>
                 </div>
 
-                {/* Hook */}
-                <div className="bg-surface-2 border border-border rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#f59e0b" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    <p className="text-xs font-bold text-amber-400 uppercase">Le hook</p>
-                  </div>
-                  <p className="text-xs text-text-muted leading-relaxed">{analysis.pourquoi?.hook_fonctionne}</p>
-                </div>
-
-                {/* Structure */}
-                <div className="bg-surface-2 border border-border rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#22c55e" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
-                    <p className="text-xs font-bold text-emerald-400 uppercase">La structure</p>
-                  </div>
-                  <p className="text-xs text-text-muted leading-relaxed">{analysis.pourquoi?.structure_retient}</p>
-                </div>
-              </div>
-
-              {/* 3 éléments clés */}
-              <div className="bg-surface-2 border border-border rounded-xl p-4">
-                <p className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3">3 éléments clés de performance</p>
-                <div className="space-y-2">
-                  {analysis.pourquoi?.elements_cles?.map((el: string, i: number) => (
-                    <div key={i} className="flex items-start gap-2">
-                      <span className="text-accent font-bold text-sm mt-0.5">{i + 1}.</span>
-                      <p className="text-sm text-text-primary">{el}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+                  <div className="bg-surface-2 border border-border rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#E40000" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" /></svg>
+                      <p className="text-xs font-bold text-accent uppercase">Le sujet</p>
                     </div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
+                    <p className="text-xs text-text-muted leading-relaxed">{contenu.sujet_attire}</p>
+                  </div>
 
-            {/* Bloc 4 — Tendances */}
+                  <div className="bg-surface-2 border border-border rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#f59e0b" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      <p className="text-xs font-bold text-amber-400 uppercase">Le hook</p>
+                    </div>
+                    <p className="text-xs text-text-muted leading-relaxed">{contenu.hook_analyse}</p>
+                  </div>
+
+                  <div className="bg-surface-2 border border-border rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#22c55e" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                      <p className="text-xs font-bold text-emerald-400 uppercase">La structure</p>
+                    </div>
+                    <p className="text-xs text-text-muted leading-relaxed">{contenu.structure_analyse}</p>
+                  </div>
+                </div>
+
+                {/* Points forts */}
+                <div className="bg-surface-2 border border-border rounded-xl p-4 mb-4">
+                  <p className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3">Points forts</p>
+                  <div className="space-y-2">
+                    {contenu.points_forts?.map((el: string, i: number) => (
+                      <div key={i} className="flex items-start gap-2">
+                        <span className="text-emerald-400 mt-0.5">
+                          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        </span>
+                        <p className="text-sm text-text-primary">{el}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Axes d'amélioration */}
+                {contenu.axes_amelioration && contenu.axes_amelioration.length > 0 && (
+                  <div className="bg-surface-2 border border-border rounded-xl p-4">
+                    <p className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3">Axes d&apos;amélioration</p>
+                    <div className="space-y-2">
+                      {contenu.axes_amelioration.map((el: string, i: number) => (
+                        <div key={i} className="flex items-start gap-2">
+                          <span className="text-amber-400 mt-0.5">
+                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                          </span>
+                          <p className="text-sm text-text-primary">{el}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* Bloc — Tendances */}
             <motion.div
               {...fadeUp}
               transition={{ duration: 0.4, delay: 0.25 }}
@@ -258,7 +391,6 @@ export default function AnalyzePage() {
                 <h2 className="font-display font-bold text-lg">Tendances</h2>
               </div>
 
-              {/* Badge score */}
               <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg ${trend.bg} border ${trend.border} mb-4`}>
                 <span className={`font-bold text-sm ${trend.text}`}>{trend.label}</span>
                 <span className="text-text-muted text-xs">— Ce sujet en ce moment</span>
@@ -277,10 +409,41 @@ export default function AnalyzePage() {
           </div>
         </div>
 
+        {/* Outlier Suggestions */}
+        {outlierVideos.length > 0 && (
+          <motion.div
+            {...fadeUp}
+            transition={{ duration: 0.4, delay: 0.3 }}
+            className="mt-8"
+          >
+            <div className="bg-surface border border-border rounded-2xl p-6">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#a855f7" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
+                </div>
+                <h2 className="font-display font-bold text-lg">Vidéos outliers de cette chaîne</h2>
+              </div>
+              <p className="text-text-dim text-xs mb-5 ml-10">
+                Ces vidéos surperforment la moyenne de la chaîne — des sujets potentiellement plus intéressants à adapter.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                {outlierVideos.map((video) => (
+                  <OutlierCard
+                    key={video.videoId}
+                    video={video}
+                    onAnalyze={handleAnalyzeOutlier}
+                  />
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* CTA */}
         <motion.div
           {...fadeUp}
-          transition={{ duration: 0.4, delay: 0.3 }}
+          transition={{ duration: 0.4, delay: 0.35 }}
           className="mt-8 flex justify-center"
         >
           <button

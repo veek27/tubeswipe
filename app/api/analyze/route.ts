@@ -24,14 +24,15 @@ function extractVideoId(url: string): string | null {
 async function fetchYouTubeData(videoId: string) {
   const apiKey = process.env.YOUTUBE_API_KEY
   if (!apiKey) {
-    // Fallback: return minimal info if no YouTube API key
     return {
       title: '',
       description: '',
       thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
       views: 'N/A',
+      viewCount: 0,
       publishedAt: 'N/A',
       channelTitle: 'N/A',
+      channelId: '',
     }
   }
 
@@ -53,10 +54,115 @@ async function fetchYouTubeData(videoId: string) {
     description: snippet.description,
     thumbnail: snippet.thumbnails?.maxres?.url || snippet.thumbnails?.high?.url || `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
     views: Number(stats.viewCount).toLocaleString('fr-FR'),
+    viewCount: Number(stats.viewCount),
     publishedAt: new Date(snippet.publishedAt).toLocaleDateString('fr-FR', {
       year: 'numeric', month: 'long', day: 'numeric'
     }),
     channelTitle: snippet.channelTitle,
+    channelId: snippet.channelId,
+  }
+}
+
+interface ChannelVideo {
+  videoId: string
+  title: string
+  thumbnail: string
+  views: number
+  viewsFormatted: string
+  publishedAt: string
+  multiplier: number
+  url: string
+}
+
+async function fetchChannelOutliers(channelId: string, currentVideoId: string, currentViews: number): Promise<{
+  channelAvgViews: number
+  multiplier: number
+  isOutlier: boolean
+  outlierVideos: ChannelVideo[]
+}> {
+  const apiKey = process.env.YOUTUBE_API_KEY
+  if (!apiKey || !channelId) {
+    return { channelAvgViews: 0, multiplier: 0, isOutlier: false, outlierVideos: [] }
+  }
+
+  try {
+    // 1. Get recent videos from the channel (up to 50)
+    const searchRes = await fetch(
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&type=video&order=date&maxResults=50&key=${apiKey}`
+    )
+    const searchData = await searchRes.json()
+
+    if (!searchData.items || searchData.items.length === 0) {
+      return { channelAvgViews: 0, multiplier: 0, isOutlier: false, outlierVideos: [] }
+    }
+
+    const videoIds = searchData.items
+      .map((item: { id?: { videoId?: string } }) => item.id?.videoId)
+      .filter(Boolean)
+      .join(',')
+
+    // 2. Get view counts for all these videos
+    const statsRes = await fetch(
+      `https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet&id=${videoIds}&key=${apiKey}`
+    )
+    const statsData = await statsRes.json()
+
+    if (!statsData.items || statsData.items.length === 0) {
+      return { channelAvgViews: 0, multiplier: 0, isOutlier: false, outlierVideos: [] }
+    }
+
+    // 3. Calculate average views (excluding the current video to avoid bias)
+    const otherVideos = statsData.items.filter(
+      (v: { id: string }) => v.id !== currentVideoId
+    )
+
+    const totalViews = otherVideos.reduce(
+      (sum: number, v: { statistics: { viewCount: string } }) => sum + Number(v.statistics.viewCount),
+      0
+    )
+    const channelAvgViews = otherVideos.length > 0 ? Math.round(totalViews / otherVideos.length) : 0
+
+    // 4. Calculate multiplier for the analyzed video
+    const multiplier = channelAvgViews > 0
+      ? Math.round((currentViews / channelAvgViews) * 10) / 10
+      : 0
+
+    const isOutlier = multiplier >= 2
+
+    // 5. Find outlier videos to suggest (sorted by multiplier, exclude current)
+    const allWithMultiplier: ChannelVideo[] = statsData.items
+      .filter((v: { id: string }) => v.id !== currentVideoId)
+      .map((v: { id: string; snippet: { title: string; thumbnails: { high?: { url: string }; medium?: { url: string } }; publishedAt: string }; statistics: { viewCount: string } }) => {
+        const views = Number(v.statistics.viewCount)
+        const vidMultiplier = channelAvgViews > 0
+          ? Math.round((views / channelAvgViews) * 10) / 10
+          : 0
+        return {
+          videoId: v.id,
+          title: v.snippet.title,
+          thumbnail: v.snippet.thumbnails?.high?.url || v.snippet.thumbnails?.medium?.url || `https://img.youtube.com/vi/${v.id}/mqdefault.jpg`,
+          views,
+          viewsFormatted: views.toLocaleString('fr-FR'),
+          publishedAt: new Date(v.snippet.publishedAt).toLocaleDateString('fr-FR', {
+            year: 'numeric', month: 'short', day: 'numeric'
+          }),
+          multiplier: vidMultiplier,
+          url: `https://www.youtube.com/watch?v=${v.id}`,
+        }
+      })
+      .filter((v: ChannelVideo) => v.multiplier >= 1.5)
+      .sort((a: ChannelVideo, b: ChannelVideo) => b.multiplier - a.multiplier)
+      .slice(0, 5)
+
+    return {
+      channelAvgViews,
+      multiplier,
+      isOutlier,
+      outlierVideos: allWithMultiplier,
+    }
+  } catch (e) {
+    console.error('[analyze] Channel outlier fetch error:', e)
+    return { channelAvgViews: 0, multiplier: 0, isOutlier: false, outlierVideos: [] }
   }
 }
 
@@ -115,8 +221,13 @@ export async function POST(request: NextRequest) {
     // 1. Fetch YouTube data
     const videoInfo = await fetchYouTubeData(videoId)
 
-    // 2. Call Claude to analyze the video
-    const systemPrompt = `Tu es un expert mondial en stratégie de contenu YouTube et en analyse virale. Tu analyses des vidéos pour comprendre pourquoi elles fonctionnent et extraire leur structure.
+    // 2. Fetch channel data for outlier detection (in parallel with Claude call)
+    const outlierPromise = fetchChannelOutliers(videoInfo.channelId, videoId, videoInfo.viewCount)
+
+    // 3. Call Claude to analyze the video
+    const systemPrompt = `Tu es un expert mondial en stratégie de contenu YouTube. Tu analyses des vidéos pour comprendre leur structure, leur angle et ce qui les rend intéressantes à étudier.
+
+IMPORTANT : Tu ne dois PAS supposer qu'une vidéo est "virale" ou "a fonctionné". Tu analyses objectivement la vidéo. Si elle performe bien par rapport à la chaîne, tu le notes. Sinon, tu analyses quand même sa structure et son potentiel.
 
 Tu dois répondre UNIQUEMENT en JSON valide, sans markdown, sans backticks, sans texte avant ou après. Juste le JSON.`
 
@@ -143,20 +254,24 @@ Réponds avec ce JSON exact :
     {"partie": "Partie 3 - [Titre]", "description": "Ce qui est couvert"},
     {"partie": "Conclusion / CTA", "description": "Comment la vidéo se termine"}
   ],
-  "pourquoi": {
-    "sujet_attire": "Pourquoi ce SUJET attire les clics (émotion, curiosité, timing, universalité...) — 2-3 phrases concrètes",
-    "hook_fonctionne": "Pourquoi le HOOK fonctionne (promesse claire, pattern interrupt, identification...) — 2-3 phrases concrètes",
-    "structure_retient": "Pourquoi la STRUCTURE retient l'attention (storytelling, tension, progression...) — 2-3 phrases concrètes",
-    "elements_cles": [
-      "Premier élément clé qui explique la performance",
-      "Deuxième élément clé",
-      "Troisième élément clé"
+  "analyse_contenu": {
+    "sujet_attire": "Pourquoi ce SUJET peut attirer l'attention (émotion, curiosité, timing, universalité...) — 2-3 phrases concrètes et objectives",
+    "hook_analyse": "Analyse du HOOK : ce qui fonctionne bien et ce qui pourrait être amélioré — 2-3 phrases",
+    "structure_analyse": "Analyse de la STRUCTURE : points forts et points faibles (storytelling, tension, progression...) — 2-3 phrases",
+    "points_forts": [
+      "Premier point fort de cette vidéo",
+      "Deuxième point fort",
+      "Troisième point fort"
+    ],
+    "axes_amelioration": [
+      "Premier axe d'amélioration possible",
+      "Deuxième axe d'amélioration"
     ]
   },
   "tendances": {
     "score": "HOT ou WARM ou EVERGREEN",
-    "explication": "2-3 phrases sur la popularité actuelle de ce sujet sur Google Trends, YouTube, réseaux sociaux",
-    "opportunite": "Conseil actionnable en 1-2 phrases pour surfer sur cette tendance",
+    "explication": "2-3 phrases sur la popularité actuelle de ce sujet",
+    "opportunite": "Conseil actionnable en 1-2 phrases pour exploiter ce sujet",
     "conseil": "Un conseil stratégique pour quelqu'un qui veut adapter ce sujet à sa niche"
   }
 }`
@@ -242,6 +357,9 @@ Réponds avec ce JSON exact :
     }
     analysis = stripCitations(analysis)
 
+    // Wait for outlier data
+    const outlierData = await outlierPromise
+
     // Read back current credits for response
     let currentCredits: number | undefined
     if (userId) {
@@ -249,7 +367,12 @@ Réponds avec ce JSON exact :
       currentCredits = u?.credits
     }
 
-    return NextResponse.json({ videoInfo, analysis, credits: currentCredits })
+    return NextResponse.json({
+      videoInfo,
+      analysis,
+      outlierData,
+      credits: currentCredits,
+    })
   } catch (error: unknown) {
     console.error('Analyze error:', error)
     const message = error instanceof Error ? error.message : 'Erreur interne'

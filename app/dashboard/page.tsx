@@ -44,7 +44,7 @@ type Tab = 'analyses' | 'profiles'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { user, logout, setAnalysis, setVideoInfo, setYoutubeUrl, setSavedAnalysisId, updateCredits, hasMounted, setMounted } = useStore()
+  const { user, logout, setAnalysis, setVideoInfo, setYoutubeUrl, setSavedAnalysisId, setOutlierData, updateCredits, hasMounted, setMounted } = useStore()
   const [tab, setTab] = useState<Tab>('analyses')
   const [analyses, setAnalyses] = useState<AnalysisRecord[]>([])
   const [profiles, setProfiles] = useState<ProfileRecord[]>([])
@@ -121,6 +121,7 @@ export default function DashboardPage() {
       if (data.credits !== undefined) updateCredits(data.credits)
       setVideoInfo(data.videoInfo)
       setAnalysis(data.analysis)
+      setOutlierData(data.outlierData || null)
       setStoreLoading(false)
       router.push('/analyze')
     } catch (e: unknown) {

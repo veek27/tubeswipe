@@ -15,7 +15,7 @@ export default function Home() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const { setYoutubeUrl, setVideoInfo, setAnalysis, setLoading: setStoreLoading, user, updateCredits, hasMounted, setMounted } = useStore()
+  const { setYoutubeUrl, setVideoInfo, setAnalysis, setOutlierData, setLoading: setStoreLoading, user, updateCredits, hasMounted, setMounted } = useStore()
 
   useEffect(() => {
     if (!hasMounted) setMounted()
@@ -68,6 +68,7 @@ export default function Home() {
       if (data.credits !== undefined) updateCredits(data.credits)
       setVideoInfo(data.videoInfo)
       setAnalysis(data.analysis)
+      setOutlierData(data.outlierData || null)
       setStoreLoading(false)
       router.push('/analyze')
     } catch (e: unknown) {
