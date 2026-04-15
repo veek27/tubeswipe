@@ -317,7 +317,7 @@ Réponds avec ce JSON exact :
       try {
         response = await anthropic.messages.create({
           model: 'claude-sonnet-4-20250514',
-          max_tokens: 2000,
+          max_tokens: 3000,
           system: systemPrompt,
           tools: [{ type: 'web_search_20250305', name: 'web_search' }],
           messages: [{ role: 'user', content: userMessage }],
@@ -349,26 +349,44 @@ Réponds avec ce JSON exact :
       .map((block) => block.text)
       .join('\n')
 
-    // Parse JSON response — strip citation tags from web search
+    // Parse JSON response — aggressively strip citation tags and fix common issues
     let analysis
-    try {
-      const cleaned = textContent
-        .replace(/```json|```/g, '')
-        .replace(/<cite[^>]*>/g, '')
-        .replace(/<\/cite>/g, '')
-        .trim()
-      analysis = JSON.parse(cleaned)
-    } catch {
-      // Try to extract JSON from the response
-      const jsonMatch = textContent.match(/\{[\s\S]*\}/)
-      if (jsonMatch) {
-        const cleanedMatch = jsonMatch[0]
-          .replace(/<cite[^>]*>/g, '')
-          .replace(/<\/cite>/g, '')
-        analysis = JSON.parse(cleanedMatch)
-      } else {
-        throw new Error('Impossible de parser la réponse de Claude')
+    const cleanText = (t: string) => t
+      .replace(/```json|```/g, '')
+      .replace(/<cite[^>]*?\/>/g, '')
+      .replace(/<cite[^>]*>/g, '')
+      .replace(/<\/cite>/g, '')
+      .replace(/[\x00-\x1F\x7F]/g, (ch) => ch === '\n' || ch === '\r' || ch === '\t' ? ch : '') // remove control chars
+      .trim()
+
+    const tryParse = (t: string) => {
+      // Extract the outermost JSON object
+      const start = t.indexOf('{')
+      const end = t.lastIndexOf('}')
+      if (start === -1 || end === -1) return null
+      const jsonStr = t.substring(start, end + 1)
+      try {
+        return JSON.parse(jsonStr)
+      } catch {
+        // Try fixing common issues: unescaped newlines in strings
+        const fixed = jsonStr
+          .replace(/(?<=:\s*"[^"]*)\n([^"]*")/g, '\\n$1') // fix newlines inside JSON strings
+          .replace(/,\s*}/g, '}') // remove trailing commas
+          .replace(/,\s*]/g, ']')
+        try {
+          return JSON.parse(fixed)
+        } catch {
+          return null
+        }
       }
+    }
+
+    const cleaned = cleanText(textContent)
+    analysis = tryParse(cleaned)
+
+    if (!analysis) {
+      console.error('[analyze] Failed to parse JSON. Raw text:', textContent.substring(0, 500))
+      throw new Error('Impossible de parser la réponse de l\'IA. Réessaie.')
     }
 
     // Deep clean: remove any remaining citation tags in all string values
