@@ -253,14 +253,16 @@ export default function Home() {
               )}
             </button>
           </div>
-          <p className="text-center text-[11px] text-text-dim mt-2 px-1 flex items-center justify-center gap-2">
-            <span className="text-accent font-semibold">1 analyse + 1 script offerts</span>
-            <span className="text-white/10">|</span>
-            <span className="inline-flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-emerald-400 font-semibold">CB non requise</span>
-            </span>
-          </p>
+          {(!user || user.plan === 'free') && (
+            <p className="text-center text-[11px] text-text-dim mt-2 px-1 flex items-center justify-center gap-2">
+              <span className="text-accent font-semibold">1 analyse + 1 script offerts</span>
+              <span className="text-white/10">|</span>
+              <span className="inline-flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-emerald-400 font-semibold">CB non requise</span>
+              </span>
+            </p>
+          )}
         </motion.div>
 
         {/* Error */}
