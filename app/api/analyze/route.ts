@@ -9,6 +9,8 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 })
 
+console.log('[analyze] Using service role key:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -84,15 +86,22 @@ export async function POST(request: NextRequest) {
       }
 
       const newCredits = Math.round((user.credits - CREDIT_COSTS.analysis) * 10) / 10
-      const { data: updated } = await supabase
+      console.log('[analyze] Deducting credits:', { userId, oldCredits: user.credits, newCredits })
+
+      const { data: updated, error: updateError } = await supabase
         .from('users')
         .update({ credits: newCredits })
         .eq('id', userId)
         .select('credits')
         .maybeSingle()
 
+      if (updateError) {
+        console.error('[analyze] Credit update ERROR:', updateError)
+      }
       if (!updated) {
-        console.error('Analysis credit deduction failed for user:', userId)
+        console.error('[analyze] Credit update returned no data for user:', userId)
+      } else {
+        console.log('[analyze] Credits updated successfully:', updated.credits)
       }
 
       await supabase.from('credit_transactions').insert({
