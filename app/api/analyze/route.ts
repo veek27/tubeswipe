@@ -262,13 +262,18 @@ export async function POST(request: NextRequest) {
     ])
 
     // 3. Call Claude to analyze the video
-    const systemPrompt = `Tu es un expert mondial en stratégie de contenu YouTube. Tu analyses des vidéos pour comprendre leur structure, leur angle et ce qui les rend intéressantes à étudier.
+    const systemPrompt = `Tu es un consultant expert en stratégie YouTube. Tu donnes des analyses HONNÊTES et UTILES.
 
-IMPORTANT : Tu ne dois PAS supposer qu'une vidéo est "virale" ou "a fonctionné". Tu analyses objectivement la vidéo. Si elle performe bien par rapport à la chaîne, tu le notes. Sinon, tu analyses quand même sa structure et son potentiel.
+RÈGLES ABSOLUES :
+- Sois HONNÊTE sur la performance. Si une vidéo a peu de vues, dis-le clairement. Ne fais jamais semblant qu'elle performe bien.
+- Analyse la STRUCTURE et le SUJET objectivement, indépendamment des vues.
+- Donne des VRAIS CONSEILS actionnables, pas du blabla générique.
+- Si le sujet est bon mais l'exécution faible, dis-le. Si le sujet est mauvais, dis-le aussi.
+- Le but de l'utilisateur est de TROUVER DES BONS SUJETS à adapter à sa niche. Aide-le à savoir si ce sujet vaut le coup.
 
-Tu dois répondre UNIQUEMENT en JSON valide, sans markdown, sans backticks, sans texte avant ou après. Juste le JSON.`
+Tu dois répondre UNIQUEMENT en JSON valide, sans markdown, sans backticks, sans texte avant ou après.`
 
-    const userMessage = `Analyse cette vidéo YouTube en profondeur :
+    const userMessage = `Analyse cette vidéo YouTube :
 
 URL : ${youtubeUrl}
 Titre : ${videoInfo.title}
@@ -277,40 +282,28 @@ Vues : ${videoInfo.views}
 Date : ${videoInfo.publishedAt}
 Chaîne : ${videoInfo.channelTitle}
 
-Analyse le sujet, la structure et le potentiel de cette vidéo.
-
 Réponds avec ce JSON exact :
 {
-  "sujet": "Le sujet principal en une phrase courte et percutante",
-  "angle": "L'angle ou la promesse spécifique de la vidéo",
+  "sujet": "Le sujet principal en une phrase courte",
+  "angle": "L'angle ou la promesse spécifique utilisée",
+  "verdict": "EXCELLENT ou BON ou MOYEN ou FAIBLE — ton verdict honnête sur le potentiel de ce sujet pour être adapté dans une autre niche",
+  "verdict_explication": "2-3 phrases HONNÊTES expliquant pourquoi ce verdict. Si la vidéo a peu de vues, mentionne-le. Si le sujet est saturé, dis-le. Sois direct et utile.",
   "mots_cles": ["mot1", "mot2", "mot3", "mot4", "mot5"],
   "plan": [
-    {"partie": "Hook (0:00-0:30)", "description": "Description précise du hook utilisé"},
+    {"partie": "Hook", "description": "Ce que fait le hook — est-il efficace ou pas ?"},
     {"partie": "Partie 1 - [Titre]", "description": "Ce qui est couvert"},
     {"partie": "Partie 2 - [Titre]", "description": "Ce qui est couvert"},
     {"partie": "Partie 3 - [Titre]", "description": "Ce qui est couvert"},
-    {"partie": "Conclusion / CTA", "description": "Comment la vidéo se termine"}
+    {"partie": "Conclusion", "description": "Comment ça se termine"}
   ],
-  "analyse_contenu": {
-    "sujet_attire": "Pourquoi ce SUJET peut attirer l'attention (émotion, curiosité, timing, universalité...) — 2-3 phrases concrètes et objectives",
-    "hook_analyse": "Analyse du HOOK : ce qui fonctionne bien et ce qui pourrait être amélioré — 2-3 phrases",
-    "structure_analyse": "Analyse de la STRUCTURE : points forts et points faibles (storytelling, tension, progression...) — 2-3 phrases",
-    "points_forts": [
-      "Premier point fort de cette vidéo",
-      "Deuxième point fort",
-      "Troisième point fort"
-    ],
-    "axes_amelioration": [
-      "Premier axe d'amélioration possible",
-      "Deuxième axe d'amélioration"
-    ]
+  "points_forts": ["Un vrai point fort", "Un autre point fort"],
+  "points_faibles": ["Un vrai point faible ou axe d'amélioration", "Un autre"],
+  "adaptabilite": {
+    "score": "FORT ou MOYEN ou FAIBLE",
+    "explication": "Est-ce que ce sujet/angle peut facilement être adapté à d'autres niches ? Pourquoi ?",
+    "suggestion": "Suggestion concrète : comment adapter ce sujet à une autre niche (exemple concret)"
   },
-  "tendances": {
-    "score": "HOT ou WARM ou EVERGREEN",
-    "explication": "2-3 phrases sur la popularité actuelle de ce sujet",
-    "opportunite": "Conseil actionnable en 1-2 phrases pour exploiter ce sujet",
-    "conseil": "Un conseil stratégique pour quelqu'un qui veut adapter ce sujet à sa niche"
-  }
+  "conseil_final": "Un conseil direct et honnête pour l'utilisateur. Si la vidéo n'est pas un bon choix, dis-lui clairement de chercher une meilleure vidéo sur cette chaîne ou un meilleur sujet. Sois utile, pas poli."
 }`
 
     // Retry with short waits (must stay within 60s Vercel timeout)

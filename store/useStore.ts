@@ -9,11 +9,23 @@ interface VideoInfo {
   channelTitle: string
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface Analysis {
   sujet: string
   angle: string
   mots_cles: string[]
   plan: { partie: string; description: string }[]
+  verdict?: string
+  verdict_explication?: string
+  points_forts?: string[]
+  points_faibles?: string[]
+  adaptabilite?: {
+    score: string
+    explication: string
+    suggestion: string
+  }
+  conseil_final?: string
+  // Legacy fields
   pourquoi?: {
     sujet_attire: string
     hook_fonctionne: string
@@ -27,7 +39,7 @@ interface Analysis {
     points_forts: string[]
     axes_amelioration: string[]
   }
-  tendances: {
+  tendances?: {
     score: 'HOT' | 'WARM' | 'EVERGREEN'
     explication: string
     opportunite: string
