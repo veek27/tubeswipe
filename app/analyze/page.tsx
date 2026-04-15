@@ -212,8 +212,12 @@ export default function AnalyzePage() {
                 </div>
                 <p className="text-[10px] text-text-dim mt-2">
                   {isOutlier
-                    ? `${multiplier}x la moyenne — c'est une outlier.`
-                    : multiplier >= 1 ? 'Performance standard.' : 'Sous la moyenne.'}
+                    ? `${multiplier}x la moyenne — cette vidéo surperforme clairement sur cette chaîne.`
+                    : channelAvgVPD < 10
+                      ? `La chaîne est encore petite (${channelAvgVPD} v/j en moyenne). Le score outlier est peu fiable sur les petites chaînes — analyse plutôt des chaînes avec plus de volume.`
+                      : multiplier >= 1
+                        ? `Performance dans la moyenne. Ce sujet ne se démarque pas particulièrement.`
+                        : `Sous la moyenne. Ce sujet n'a pas accroché — regarde les suggestions plus bas.`}
                 </p>
               </>
             ) : (
