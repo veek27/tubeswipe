@@ -58,6 +58,7 @@ async function fetchYouTubeData(videoId: string) {
     publishedAt: new Date(snippet.publishedAt).toLocaleDateString('fr-FR', {
       year: 'numeric', month: 'long', day: 'numeric'
     }),
+    publishedAtRaw: snippet.publishedAt,
     channelTitle: snippet.channelTitle,
     channelId: snippet.channelId,
   }
@@ -69,21 +70,37 @@ interface ChannelVideo {
   thumbnail: string
   views: number
   viewsFormatted: string
+  viewsPerDay: number
   publishedAt: string
+  daysOld: number
   multiplier: number
   url: string
 }
 
-async function fetchChannelOutliers(channelId: string, currentVideoId: string, currentViews: number): Promise<{
+function getDaysOld(publishedAt: string): number {
+  const published = new Date(publishedAt)
+  const now = new Date()
+  const diffMs = now.getTime() - published.getTime()
+  return Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24))) // min 1 day
+}
+
+function getViewsPerDay(views: number, publishedAt: string): number {
+  const days = getDaysOld(publishedAt)
+  return Math.round((views / days) * 10) / 10
+}
+
+async function fetchChannelOutliers(channelId: string, currentVideoId: string, currentViews: number, currentPublishedAt: string): Promise<{
+  channelAvgViewsPerDay: number
   channelAvgViews: number
   multiplier: number
   isOutlier: boolean
+  currentViewsPerDay: number
+  currentDaysOld: number
   outlierVideos: ChannelVideo[]
 }> {
   const apiKey = process.env.YOUTUBE_API_KEY
-  if (!apiKey || !channelId) {
-    return { channelAvgViews: 0, multiplier: 0, isOutlier: false, outlierVideos: [] }
-  }
+  const empty = { channelAvgViewsPerDay: 0, channelAvgViews: 0, multiplier: 0, isOutlier: false, currentViewsPerDay: 0, currentDaysOld: 0, outlierVideos: [] }
+  if (!apiKey || !channelId) return empty
 
   try {
     // 1. Get recent videos from the channel (up to 50)
@@ -92,50 +109,61 @@ async function fetchChannelOutliers(channelId: string, currentVideoId: string, c
     )
     const searchData = await searchRes.json()
 
-    if (!searchData.items || searchData.items.length === 0) {
-      return { channelAvgViews: 0, multiplier: 0, isOutlier: false, outlierVideos: [] }
-    }
+    if (!searchData.items || searchData.items.length === 0) return empty
 
     const videoIds = searchData.items
       .map((item: { id?: { videoId?: string } }) => item.id?.videoId)
       .filter(Boolean)
       .join(',')
 
-    // 2. Get view counts for all these videos
+    // 2. Get view counts + publish dates for all videos
     const statsRes = await fetch(
       `https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet&id=${videoIds}&key=${apiKey}`
     )
     const statsData = await statsRes.json()
 
-    if (!statsData.items || statsData.items.length === 0) {
-      return { channelAvgViews: 0, multiplier: 0, isOutlier: false, outlierVideos: [] }
-    }
+    if (!statsData.items || statsData.items.length === 0) return empty
 
-    // 3. Calculate average views (excluding the current video to avoid bias)
+    // 3. Calculate views/day for each video
     const otherVideos = statsData.items.filter(
       (v: { id: string }) => v.id !== currentVideoId
     )
 
+    const otherViewsPerDay = otherVideos.map(
+      (v: { statistics: { viewCount: string }; snippet: { publishedAt: string } }) =>
+        getViewsPerDay(Number(v.statistics.viewCount), v.snippet.publishedAt)
+    )
+
+    const totalViewsPerDay = otherViewsPerDay.reduce((sum: number, vpd: number) => sum + vpd, 0)
+    const channelAvgViewsPerDay = otherViewsPerDay.length > 0
+      ? Math.round((totalViewsPerDay / otherViewsPerDay.length) * 10) / 10
+      : 0
+
+    // Also keep raw avg views for display
     const totalViews = otherVideos.reduce(
       (sum: number, v: { statistics: { viewCount: string } }) => sum + Number(v.statistics.viewCount),
       0
     )
     const channelAvgViews = otherVideos.length > 0 ? Math.round(totalViews / otherVideos.length) : 0
 
-    // 4. Calculate multiplier for the analyzed video
-    const multiplier = channelAvgViews > 0
-      ? Math.round((currentViews / channelAvgViews) * 10) / 10
+    // 4. Calculate multiplier based on views/day (time-normalized)
+    const currentVPD = getViewsPerDay(currentViews, currentPublishedAt)
+    const currentDays = getDaysOld(currentPublishedAt)
+    const multiplier = channelAvgViewsPerDay > 0
+      ? Math.round((currentVPD / channelAvgViewsPerDay) * 10) / 10
       : 0
 
     const isOutlier = multiplier >= 2
 
-    // 5. Find outlier videos to suggest (sorted by multiplier, exclude current)
+    // 5. Find outlier videos (time-normalized), sorted by multiplier
     const allWithMultiplier: ChannelVideo[] = statsData.items
       .filter((v: { id: string }) => v.id !== currentVideoId)
       .map((v: { id: string; snippet: { title: string; thumbnails: { high?: { url: string }; medium?: { url: string } }; publishedAt: string }; statistics: { viewCount: string } }) => {
         const views = Number(v.statistics.viewCount)
-        const vidMultiplier = channelAvgViews > 0
-          ? Math.round((views / channelAvgViews) * 10) / 10
+        const vpd = getViewsPerDay(views, v.snippet.publishedAt)
+        const days = getDaysOld(v.snippet.publishedAt)
+        const vidMultiplier = channelAvgViewsPerDay > 0
+          ? Math.round((vpd / channelAvgViewsPerDay) * 10) / 10
           : 0
         return {
           videoId: v.id,
@@ -143,9 +171,11 @@ async function fetchChannelOutliers(channelId: string, currentVideoId: string, c
           thumbnail: v.snippet.thumbnails?.high?.url || v.snippet.thumbnails?.medium?.url || `https://img.youtube.com/vi/${v.id}/mqdefault.jpg`,
           views,
           viewsFormatted: views.toLocaleString('fr-FR'),
+          viewsPerDay: vpd,
           publishedAt: new Date(v.snippet.publishedAt).toLocaleDateString('fr-FR', {
             year: 'numeric', month: 'short', day: 'numeric'
           }),
+          daysOld: days,
           multiplier: vidMultiplier,
           url: `https://www.youtube.com/watch?v=${v.id}`,
         }
@@ -155,14 +185,17 @@ async function fetchChannelOutliers(channelId: string, currentVideoId: string, c
       .slice(0, 5)
 
     return {
+      channelAvgViewsPerDay,
       channelAvgViews,
       multiplier,
       isOutlier,
+      currentViewsPerDay: currentVPD,
+      currentDaysOld: currentDays,
       outlierVideos: allWithMultiplier,
     }
   } catch (e) {
     console.error('[analyze] Channel outlier fetch error:', e)
-    return { channelAvgViews: 0, multiplier: 0, isOutlier: false, outlierVideos: [] }
+    return { channelAvgViewsPerDay: 0, channelAvgViews: 0, multiplier: 0, isOutlier: false, currentViewsPerDay: 0, currentDaysOld: 0, outlierVideos: [] }
   }
 }
 
@@ -222,7 +255,7 @@ export async function POST(request: NextRequest) {
     const videoInfo = await fetchYouTubeData(videoId)
 
     // 2. Fetch channel data for outlier detection (in parallel with Claude call)
-    const outlierPromise = fetchChannelOutliers(videoInfo.channelId, videoId, videoInfo.viewCount)
+    const outlierPromise = fetchChannelOutliers(videoInfo.channelId, videoId, videoInfo.viewCount, videoInfo.publishedAtRaw)
 
     // 3. Call Claude to analyze the video
     const systemPrompt = `Tu es un expert mondial en stratégie de contenu YouTube. Tu analyses des vidéos pour comprendre leur structure, leur angle et ce qui les rend intéressantes à étudier.

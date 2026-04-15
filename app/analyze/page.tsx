@@ -57,8 +57,12 @@ function OutlierCard({ video, onAnalyze }: { video: OutlierVideo; onAnalyze: (ur
       </div>
       <div className="p-3">
         <p className="text-xs font-semibold leading-snug mb-2 line-clamp-2">{video.title}</p>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-1">
           <span className="text-[10px] text-text-dim">{video.viewsFormatted} vues</span>
+          <span className="text-[10px] text-text-dim">{video.viewsPerDay} vues/j</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] text-text-dim">{video.publishedAt}</span>
           <button
             onClick={() => onAnalyze(video.url)}
             className="text-[10px] font-semibold text-accent hover:text-accent-hover transition-colors"
@@ -137,6 +141,9 @@ export default function AnalyzePage() {
 
   const multiplier = outlierData?.multiplier || 0
   const isOutlier = outlierData?.isOutlier || false
+  const channelAvgVPD = outlierData?.channelAvgViewsPerDay || 0
+  const currentVPD = outlierData?.currentViewsPerDay || 0
+  const currentDaysOld = outlierData?.currentDaysOld || 0
   const channelAvg = outlierData?.channelAvgViews || 0
   const outlierVideos = outlierData?.outlierVideos || []
 
@@ -228,12 +235,18 @@ export default function AnalyzePage() {
 
                 <div className="mt-4 space-y-2">
                   <div className="flex justify-between text-xs">
-                    <span className="text-text-dim">Moyenne chaîne</span>
-                    <span className="text-text-muted font-mono">{channelAvg.toLocaleString('fr-FR')} vues</span>
+                    <span className="text-text-dim">Moy. chaîne</span>
+                    <span className="text-text-muted font-mono">{channelAvgVPD} vues/jour</span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span className="text-text-dim">Cette vidéo</span>
-                    <span className="text-text-primary font-mono font-semibold">{videoInfo.views} vues</span>
+                    <span className="text-text-primary font-mono font-semibold">{currentVPD} vues/jour</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-text-dim">Ancienneté</span>
+                    <span className="text-text-muted font-mono">
+                      {currentDaysOld < 30 ? `${currentDaysOld}j` : currentDaysOld < 365 ? `${Math.round(currentDaysOld / 30)} mois` : `${Math.round(currentDaysOld / 365 * 10) / 10} ans`}
+                    </span>
                   </div>
 
                   {/* Visual bar */}
@@ -248,10 +261,10 @@ export default function AnalyzePage() {
 
                   <p className="text-[10px] text-text-dim mt-2">
                     {isOutlier
-                      ? `Cette vidéo fait ${multiplier}x la moyenne — c'est une vraie outlier, un sujet qui a clairement touché l'audience.`
+                      ? `${multiplier}x la moyenne en vues/jour — c'est une vraie outlier, un sujet qui performe bien au-delà de la norme de cette chaîne.`
                       : multiplier >= 1
-                        ? `Performance dans la moyenne de la chaîne. Le sujet n'est pas un outlier mais reste analysable.`
-                        : `Cette vidéo performe en dessous de la moyenne. Regarde les suggestions ci-dessous pour des sujets plus porteurs.`
+                        ? `Performance dans la moyenne (normalisée par ancienneté). Le sujet n'est pas un outlier mais reste analysable.`
+                        : `En dessous de la moyenne en vues/jour. Regarde les suggestions ci-dessous pour des sujets plus porteurs.`
                     }
                   </p>
                 </div>

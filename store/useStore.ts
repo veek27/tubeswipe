@@ -41,15 +41,20 @@ export interface OutlierVideo {
   thumbnail: string
   views: number
   viewsFormatted: string
+  viewsPerDay: number
   publishedAt: string
+  daysOld: number
   multiplier: number
   url: string
 }
 
 export interface OutlierData {
+  channelAvgViewsPerDay: number
   channelAvgViews: number
   multiplier: number
   isOutlier: boolean
+  currentViewsPerDay: number
+  currentDaysOld: number
   outlierVideos: OutlierVideo[]
 }
 
