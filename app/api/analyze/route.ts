@@ -3,7 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
 import { CREDIT_COSTS } from '@/lib/plans'
 
-export const maxDuration = 120 // Allow up to 120s on Vercel (Pro plan) or 60s on Hobby
+export const maxDuration = 60 // Vercel Hobby plan max
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -373,7 +373,6 @@ Réponds avec ce JSON exact :
       } catch {
         // Try fixing common issues: unescaped newlines in strings
         const fixed = jsonStr
-          .replace(/(?<=:\s*"[^"]*)\n([^"]*")/g, '\\n$1') // fix newlines inside JSON strings
           .replace(/,\s*}/g, '}') // remove trailing commas
           .replace(/,\s*]/g, ']')
         try {
