@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '@/store/useStore'
 import AppNav from '@/components/AppNav'
+import AnalysisLoader from '@/components/AnalysisLoader'
 
 interface ScriptRecord {
   id: string
@@ -407,6 +408,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen px-5 py-10">
       <AppNav />
+      <AnalysisLoader />
       <div className="max-w-[900px] mx-auto pt-12">
         {/* Header */}
         <motion.div

@@ -9,6 +9,7 @@ import LandingWhy from '@/components/LandingWhy'
 import CreatorsBanner from '@/components/CreatorsBanner'
 import LandingTestimonials from '@/components/LandingTestimonials'
 import YoutubeBgGrid from '@/components/YoutubeBgGrid'
+import AnalysisLoader from '@/components/AnalysisLoader'
 
 export default function Home() {
   const [url, setUrl] = useState('')
@@ -116,6 +117,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col items-center px-5">
+      <AnalysisLoader />
       {/* YouTube thumbnails background */}
       <YoutubeBgGrid />
 
