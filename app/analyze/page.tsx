@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { useStore, OutlierData, OutlierVideo } from '@/store/useStore'
+import { useStore, OutlierVideo } from '@/store/useStore'
 import { useEffect, useState, useRef } from 'react'
 import EmailGate from '@/components/EmailGate'
 import AppNav from '@/components/AppNav'
@@ -144,7 +144,6 @@ export default function AnalyzePage() {
   const channelAvgVPD = outlierData?.channelAvgViewsPerDay || 0
   const currentVPD = outlierData?.currentViewsPerDay || 0
   const currentDaysOld = outlierData?.currentDaysOld || 0
-  const channelAvg = outlierData?.channelAvgViews || 0
   const outlierVideos = outlierData?.outlierVideos || []
 
   // Dynamic section title based on outlier status
