@@ -3,7 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
 import { CREDIT_COSTS } from '@/lib/plans'
 
-export const maxDuration = 60 // Allow up to 60s for retries on Vercel
+export const maxDuration = 120 // Allow up to 120s on Vercel (Pro plan) or 60s on Hobby
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -103,9 +103,9 @@ async function fetchChannelOutliers(channelId: string, currentVideoId: string, c
   if (!apiKey || !channelId) return empty
 
   try {
-    // 1. Get recent videos from the channel (up to 50)
+    // 1. Get recent videos from the channel (up to 20 to stay fast)
     const searchRes = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&type=video&order=date&maxResults=50&key=${apiKey}`
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&type=video&order=date&maxResults=20&key=${apiKey}`
     )
     const searchData = await searchRes.json()
 
@@ -254,8 +254,12 @@ export async function POST(request: NextRequest) {
     // 1. Fetch YouTube data
     const videoInfo = await fetchYouTubeData(videoId)
 
-    // 2. Fetch channel data for outlier detection (in parallel with Claude call)
-    const outlierPromise = fetchChannelOutliers(videoInfo.channelId, videoId, videoInfo.viewCount, videoInfo.publishedAtRaw)
+    // 2. Fetch channel data for outlier detection (in parallel with Claude call, with timeout)
+    const outlierTimeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 15000)) // 15s max
+    const outlierPromise = Promise.race([
+      fetchChannelOutliers(videoInfo.channelId, videoId, videoInfo.viewCount, videoInfo.publishedAtRaw),
+      outlierTimeout,
+    ])
 
     // 3. Call Claude to analyze the video
     const systemPrompt = `Tu es un expert mondial en stratégie de contenu YouTube. Tu analyses des vidéos pour comprendre leur structure, leur angle et ce qui les rend intéressantes à étudier.
@@ -267,13 +271,13 @@ Tu dois répondre UNIQUEMENT en JSON valide, sans markdown, sans backticks, sans
     const userMessage = `Analyse cette vidéo YouTube en profondeur :
 
 URL : ${youtubeUrl}
-Titre : ${videoInfo.title || '(recherche le titre via web search)'}
-Description : ${videoInfo.description ? videoInfo.description.substring(0, 500) : '(recherche la description via web search)'}
+Titre : ${videoInfo.title}
+Description : ${videoInfo.description ? videoInfo.description.substring(0, 500) : '(pas de description)'}
 Vues : ${videoInfo.views}
 Date : ${videoInfo.publishedAt}
 Chaîne : ${videoInfo.channelTitle}
 
-Fais une recherche web sur cette vidéo et ce sujet pour avoir le maximum de contexte.
+Analyse le sujet, la structure et le potentiel de cette vidéo.
 
 Réponds avec ce JSON exact :
 {
@@ -319,7 +323,6 @@ Réponds avec ce JSON exact :
           model: 'claude-sonnet-4-20250514',
           max_tokens: 3000,
           system: systemPrompt,
-          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
           messages: [{ role: 'user', content: userMessage }],
         })
         break
