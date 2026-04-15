@@ -100,7 +100,11 @@ async function fetchChannelOutliers(channelId: string, currentVideoId: string, c
 }> {
   const apiKey = process.env.YOUTUBE_API_KEY
   const empty = { channelAvgViewsPerDay: 0, channelAvgViews: 0, multiplier: 0, isOutlier: false, currentViewsPerDay: 0, currentDaysOld: 0, outlierVideos: [] }
-  if (!apiKey || !channelId) return empty
+  console.log('[outlier] channelId:', channelId, 'apiKey exists:', !!apiKey)
+  if (!apiKey || !channelId) {
+    console.log('[outlier] Skipping — missing apiKey or channelId')
+    return empty
+  }
 
   try {
     // 1. Get recent videos from the channel (up to 20 to stay fast)
